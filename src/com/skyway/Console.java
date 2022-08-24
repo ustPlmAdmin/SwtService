@@ -28,7 +28,6 @@ import static org.apache.poi.ss.usermodel.CellStyle.*;
 /**
  * Бекэнд виджета SWT Console
  * */
-@Path("")
 public class Console extends SpecUtils {
 
     public Context authenticate(HttpServletRequest request) throws IOException {
@@ -203,7 +202,7 @@ public class Console extends SpecUtils {
                 return this.excel(book,root_ca_name);
             }
 
-            return response("Object is't exists or not assembly");
+            return response("Object not exists or assembly");
         } catch (Exception e) {
             return error(e);
         } finally {
