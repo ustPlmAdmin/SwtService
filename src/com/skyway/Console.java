@@ -28,13 +28,12 @@ import static org.apache.poi.ss.usermodel.CellStyle.*;
 /**
  * Бекэнд виджета SWT Console
  * */
-@Path("")
 public class Console extends SpecUtils {
 
     public Context authenticate(HttpServletRequest request) throws IOException {
         Context context = super.authenticate(request);
         String username = context.getSession().getUserName();
-        if (username.equals("m.kim") || username.equals("m.gaiduk") || username.equals("a.pagoda") || username.equals("a.pavlovich"))
+        if (username.equals("m.kim") || username.equals("s.beresnev") || username.equals("a.pagoda") || username.equals("a.pavlovich"))
             return context;
         throw new AuthenticationException();
     }
@@ -203,7 +202,7 @@ public class Console extends SpecUtils {
                 return this.excel(book,root_ca_name);
             }
 
-            return response("Object is't exists or not assembly");
+            return response("Object not exists or assembly");
         } catch (Exception e) {
             return error(e);
         } finally {
