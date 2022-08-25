@@ -1,0 +1,66 @@
+<html lang="ru">
+<head>
+    <meta charset="utf8">
+    <title>Отдел PLM систем</title>
+    <link rel="stylesheet" href="../SWTUtils/angular/angular-material.min.css">
+    <link rel="stylesheet" href="../SWTUtils/base.css">
+    <link rel="stylesheet" href="custom.css">
+    <script type="javascript">
+        require(['DS/SWTActivities/controller'], function (controller) {
+            widget.addEvent('onLoad', function () {
+                controller()
+            });
+        });
+    </script>
+</head>
+<body>
+<div class="inputs layout-column" style="height: 100%; width: 100%; padding: 20px 0 0 20px; overflow: auto">
+    <div class="logo"></div>
+    <h2>User activity chart</h2>
+    <form id="chart_form" class="inputs layout-row">
+        <div class="autocomplete">
+            <input id="chart_user" type="text" placeholder="Type user login" autocomplete="off"
+                   required>
+        </div>
+        <select id="chart_activity" required>
+            <option disabled selected>Select activity</option>
+            <option value="drawings">Create drawings</option>
+            <option value="products">Create products</option>
+        </select>
+        <input type="date" id="chart_from" required>
+        <input type="date" id="chart_to" required>
+        <button id="chart_submit">Search Activities</button>
+    </form>
+    <div class="layout-row" style="height: 600px; box-shadow: 0 0 5px #E5E5E5;">
+        <canvas id="canvas" class="flex" style="background-color: white"></canvas>
+        <div id="panel" class="layout-columm flex-30"
+             style="background-color: white; display: none;  border-left: 1px solid #E5E5E5">
+            <div id="events" class="layout-column flex" style="overflow: auto">
+                <div class="panel-title">Events for 12.13.2020</div>
+                <div class="panel-row">prd123123-123123</div>
+            </div>
+        </div>
+    </div>
+
+    <h2>User activity report</h2>
+    <form id="export_user_form" class="inputs layout-row">
+        <div class="autocomplete">
+            <input id="export_user" type="text" placeholder="Type user login" autocomplete="off" required>
+        </div>
+        <input type="date" id="export_user_from" required>
+        <input type="date" id="export_user_to" required>
+        <button id="export_user_submit">Save Excel</button>
+    </form>
+
+    <h2>Group activity report</h2>
+    <form id="export_group_form" class="inputs layout-row">
+        <div class="autocomplete">
+            <input id="export_group" type="text" placeholder="Type group name" autocomplete="off" required>
+        </div>
+        <input type="date" id="export_group_from" required>
+        <input type="date" id="export_group_to" required>
+        <button id="export_group_submit">Save Excel</button>
+    </form>
+</div>
+</body>
+</html>

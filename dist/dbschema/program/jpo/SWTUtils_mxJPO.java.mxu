@@ -1,0 +1,17 @@
+################################################################################
+# emxTriggerValidationBase_mxJPO.java.mxu
+#
+#            This file describes the target of a Configuration Item.
+################################################################################
+
+mxUpdate program "${NAME}" {
+    kind java
+    description ""
+    ################################################## Info Start
+    property "original name" value "SWTUtils"
+    property "application" value "Framework"
+    property "version" value "1"
+    ################################################## Info End
+    property "access" value "READ_WRITE"
+    file "SWTUtils_mxJPO.java"
+}

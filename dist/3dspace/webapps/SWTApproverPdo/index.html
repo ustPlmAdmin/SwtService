@@ -1,0 +1,50 @@
+<html>
+<head>
+    <title>Отдел PLM систем</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../SWTUtils/angular/angular-material.min.css">
+    <link rel="stylesheet" href="../SWTUtils/base.css">
+    <link rel="stylesheet" href="custom.css">
+    <script type="javascript">
+        require(['DS/SWTApproverPdo/controller'], function (controller) {
+            widget.addEvent('onLoad', function () {
+                controller()
+            });
+        });
+    </script>
+</head>
+<body class="layout-column">
+<div class="layout-column"  style="height: 100%; padding: 20px; overflow: auto">
+    <div class="logo"></div>
+    <h1 id="loading">Загрузка...</h1>
+    <div id="data_container" class="layout-column"  style="display: none">
+        <h2>Направленные в работу (Route)</h2>
+        <table id="routes" border="0" width="100%">
+            <tr>
+                <td style="width: 150px">Номер Route</td>
+                <td style="width: 150px">Номер задачи</td>
+                <td style="width: 150px">Номер СА</td>
+                <td style="width: auto">Владелец</td>
+                <td style="width: auto">Originated (дата)</td>
+                <td style="width: auto">Адресат задачи</td>
+                <td style="width: auto">Комментарий</td>
+            </tr>
+        </table>
+        <h2>Change Action Complete</h2>
+        <table id="ca" border="0" width="100%">
+            <tr>
+                <td style="width: 150px">Root</td>
+                <td style="width: 150px">Номер СА</td>
+                <td style="width: 150px">Состояние CA</td>
+                <td style="width: 150px">Владелец CA</td>
+                <td style="width: 150px">Route (Фоменков)</td>
+                <td style="width: auto">Исполнитель</td>
+                <td style="width: auto">Состояние Route</td>
+                <td style="width: auto">Комментарий</td>
+            </tr>
+        </table>
+
+    </div>
+</div>
+</body>
+</html>

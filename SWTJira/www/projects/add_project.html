@@ -1,0 +1,76 @@
+<md-dialog style="width: 500px" class="col">
+    <div class="row align-center-center" style="height: 80px; box-shadow: 2px 2px #E5E5E5">
+        <h1>Создать проект</h1>
+    </div>
+
+    <form class="col modal-content" ng-submit="project_insert()">
+
+        <!--добавить проверку на базе что код уникальный-->
+        <md-input-container class="md-icon-float md-block flex">
+            <label>Код провекта (3-5 английских букв)</label>
+            <md-icon md-svg-src="img/hashtag.svg"></md-icon>
+            <input ng-model="project_code" type="text" required ng-pattern="/^[A-Z]{3,5}$/"
+                   md-maxlength="5" maxlength="5" minlength="3"  md-auto-focus autocomplete="off"
+                   onkeyup="this.value = this.value.toUpperCase();">
+        </md-input-container>
+
+        <md-input-container class="md-icon-float md-block flex">
+            <label>Название проекта (Например: Unibus 212)</label>
+            <md-icon md-svg-src="img/board.svg"></md-icon>
+            <input ng-model="project_name" type="text" md-maxlength="64" maxlength="64" minlength="3"  autocomplete="off">
+        </md-input-container>
+
+        <md-input-container class="md-icon-float md-block flex">
+            <label>Название департамента</label>
+            <md-icon md-svg-src="img/team.svg"></md-icon>
+            <input ng-model="project_department" type="text" md-maxlength="64" maxlength="64" minlength="3"  autocomplete="off">
+        </md-input-container>
+
+
+        <div class="col" style="position:relative;">
+            <label><b>Руководители:</b> (Создают задачи и принимают работу)</label>
+            <md-contact-chips
+                    ng-model="managers"
+                    md-contacts="querySearch($query)"
+                    md-contact-name="name"
+                    md-contact-image="img"
+                    md-contact-email="email"
+                    placeholder="Введите фамилию..."
+                    secondary-placeholder="Введите фамилию...">
+            </md-contact-chips>
+        </div>
+
+        <div class="col" style="position:relative;">
+            <label><b>Работники:</b> (Создают задачи и принимают работу)</label>
+            <md-contact-chips
+                    ng-model="workers"
+                    md-contacts="querySearch($query)"
+                    md-contact-name="name"
+                    md-contact-image="img"
+                    md-contact-email="email"
+                    placeholder="Введите фамилию..."
+                    secondary-placeholder="Введите фамилию...">
+            </md-contact-chips>
+        </div>
+
+        <div class="row" style="margin-top: 20px">
+            <span class="flex error-message">{{project_insert_message}}</span>
+            <md-button ng-click="cancel()" style="margin-right: 20px">
+                Закрыть
+            </md-button>
+            <md-button class="md-raised md-primary md-large-button" type="submit"
+                       ng-style="project_insert_success && {'background-color':'#2da64d'}">
+                <md-progress-linear ng-if="project_insert_pending" md-mode="indeterminate"></md-progress-linear>
+                Создать
+            </md-button>
+        </div>
+
+    </form>
+
+</md-dialog>
+
+<style>
+    md-contact-chips {
+        background-color: white;
+    }
+</style>

@@ -1,0 +1,5 @@
+
+mxUpdate expression "${NAME}" {
+    !hidden
+    value "23.12.2020"
+}

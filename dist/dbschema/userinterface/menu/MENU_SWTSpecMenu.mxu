@@ -1,0 +1,12 @@
+
+mxUpdate menu "${NAME}" {
+    description ""
+    label ""
+    href ""
+    alt ""
+    command "SWTOpenSpec"
+    command "SWTOpenVpi"
+    command "SWTOpenOperational"
+    command "SWTOpenGroupSpec"
+    setting "Image" "${COMMON_DIR}/images/iconActionFileDetails.png"
+}

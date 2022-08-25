@@ -1,0 +1,44 @@
+<div class="col align-start-center">
+    <div class="row align-center-center md-whiteframe-8dp">
+        <img src="img/sw-header.jpg">
+    </div>
+    <div class="row content flex">
+        <div class="md-whiteframe-8dp flex">
+            <md-content class="row grid-line grid-header align-start-center">
+                <div class="col1">Код</div>
+                <div class="flex">Название проекта</div>
+                <div>Команда</div>
+            </md-content>
+            <md-content class="row grid-line align-start-center" ng-repeat="project in projects"
+                        ng-click="open('project/' + project.project_code)">
+                <div class="col1">{{project.project_code}}</div>
+                <div class="flex">{{project.project_name}} - {{project.project_department}}</div>
+                <div class="row" style="padding: 0">
+                    <md-button class="row">
+                        <img ng-src="{{user_logo(project.user_login)}}" class="user-logo"
+                             onerror="this.onerror = null; this.src = 'img/user.svg'"/>
+                        <span>{{users[project.user_login]}} + </span>
+                    </md-button>
+                    <md-button class="row " style="min-width: 36px; width: 36px" md-ink-ripple ng-repeat="member in projectMembers(project.project_code)">
+                        <img src="{{user_logo(member.user_login)}}" class="user-logo"
+                             onerror="this.onerror = null; this.src = 'img/user.svg'"/>
+                    </md-button>
+                </div>
+            </md-content>
+        </div>
+    </div>
+
+</div>
+
+
+<style>
+
+    .col1 {
+        width: 64px;
+    }
+
+    .grid-line {
+        padding: 0 12px;
+    }
+
+</style>

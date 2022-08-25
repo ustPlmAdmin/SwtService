@@ -1,0 +1,47 @@
+################################################################################
+# TRIGGER_PolicyChangeActionStateInWorkPromoteAction________NotifyUsers.mxu
+#
+#            This file describes the target of a Configuration Item.
+################################################################################
+
+mxUpdate trigger "${NAME}" "${REVISION}" {
+    description "notify Change Action owner and Contributors that the Change Action was promoted to In Work"
+    current "Inactive"
+    attribute "eService Constructor Arguments" ""
+    attribute "eService Error Type" "Error"
+    attribute "eService Method Name" "notificationTrigger"
+    attribute "eService Program Argument 1" "${OBJECTID}"
+    attribute "eService Program Argument 2" "EnterpriseChangeMgt.Message.Subject.ChangeActionInWork"
+    attribute "eService Program Argument 3" "EnterpriseChangeMgt.Message.Description.ChangeActionInWork"
+    attribute "eService Program Argument 4" "emxEnterpriseChangeMgtStringResource"
+    attribute "eService Program Argument 5" "1"
+    attribute "eService Program Argument 6" "1"
+    attribute "eService Program Argument 7" "0"
+    attribute "eService Program Argument 8" "0"
+    attribute "eService Program Argument 9" "0"
+    attribute "eService Program Argument 10" ""
+    attribute "eService Program Argument 11" ""
+    attribute "eService Program Argument 12" ""
+    attribute "eService Program Argument 13" ""
+    attribute "eService Program Argument 14" ""
+    attribute "eService Program Argument 15" ""
+    attribute "eService Program Argument Desc 1" ""
+    attribute "eService Program Argument Desc 2" ""
+    attribute "eService Program Argument Desc 3" ""
+    attribute "eService Program Argument Desc 4" ""
+    attribute "eService Program Argument Desc 5" ""
+    attribute "eService Program Argument Desc 6" ""
+    attribute "eService Program Argument Desc 7" ""
+    attribute "eService Program Argument Desc 8" ""
+    attribute "eService Program Argument Desc 9" ""
+    attribute "eService Program Argument Desc 10" ""
+    attribute "eService Program Argument Desc 11" ""
+    attribute "eService Program Argument Desc 12" ""
+    attribute "eService Program Argument Desc 13" ""
+    attribute "eService Program Argument Desc 14" ""
+    attribute "eService Program Argument Desc 15" ""
+    attribute "eService Program Name" "UnifiedChangeActionECMTriggers"
+    attribute "eService Run In Background" "FALSE"
+    attribute "eService Sequence Number" "20"
+    attribute "eService Target States" ""
+}

@@ -1,0 +1,10 @@
+
+mxUpdate command "${NAME}" {
+    description "emxFramework.Label.SWT.DownloadSpecification"
+    label "emxFramework.Label.SWT.DownloadSpecification"
+    alt "emxFramework.Label.SWT.DownloadSpecification"
+    href "${COMMON_DIR}/swtRedirect.jsp?path=sw/spec_docs"
+    user "all"
+    setting "Image" "${COMMON_DIR}/images/iconActionDownload.png"
+    setting "Popup Modal" "true"
+}

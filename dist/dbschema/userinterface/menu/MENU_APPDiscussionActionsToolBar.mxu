@@ -1,0 +1,24 @@
+################################################################################
+ # MENU_APPDiscussionActionsToolBar.mxu
+ #
+ #            This file describes the target of a Configuration Item.
+ ################################################################################
+
+ mxUpdate menu "${NAME}" {
+     symbolicname "menu_APPDiscussionActionsToolBar"
+     description ""
+     label "emxComponents.Common.Actions"
+     href ""
+     alt ""
+     setting "Image" "${COMMON_DIR}/images/iconActionActions.png"
+     setting "Registered Suite" "Components"
+     command "APPDiscussionCreatePublic"
+     command "APPDiscussionCreatePrivate"
+     command "APPSeparator"
+     command "APPDiscussionDeleteSelectedActionLink"
+     ################################################## Info Start
+     property "original name" value "APPDiscussionActionsToolBar"
+     property "application" value "CommonComponents"
+     property "version" value "R421.HF1"
+     ################################################## Info End
+ }

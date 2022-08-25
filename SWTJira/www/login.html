@@ -1,0 +1,32 @@
+<md-dialog style="width: 500px" class="col">
+    <div class="row align-center-center modal-header">
+        <h1>Вход в учетную запись</h1>
+    </div>
+    <div class="col">
+
+        <div class="col modal-content flex  align-center-center">
+            <!--background gradient-->
+            <div class="row flex" style="padding: 40px">
+                <img src="img/mail.svg" style="width: 150px; height: 150px">
+            </div>
+            <form class="col" ng-submit="login_button()" >
+                <md-input-container class="flex">
+                    <label>Введите адрес почты</label>
+                    <input ng-model="user_email" type="email" autocomplete="off" required
+                           minlength="10" maxlength="100" ng-pattern="/^.+@.+\..+$/">
+                </md-input-container>
+
+                <span>{{sign_in_message}}</span>
+                <md-button type="submit" class="md-raised md-primary flex" md-autofocus
+                           ng-disabled="sing_in_pending || !isEmail(user_email) || sign_in_success"
+                           style="margin-top: 20px">
+                    <md-progress-linear ng-if="loading" md-mode="indeterminate"></md-progress-linear>
+                    Войти
+                </md-button>
+                <div ng-if="sign_in_success">
+                    Вам выслана ссылка для входа.
+                </div>
+            </form>
+        </div>
+    </div>
+</md-dialog>

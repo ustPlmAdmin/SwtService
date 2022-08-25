@@ -1,0 +1,94 @@
+################################################################################
+# POLICY_Thread.mxu
+#
+#            This file describes the target of a Configuration Item.
+################################################################################
+
+mxUpdate policy "${NAME}" {
+    symbolicname "policy_Thread"
+    description "Thread"
+    !hidden
+    type "Thread"
+    defaultformat ""
+    sequence ""
+    store ""
+    allstate {
+        user "Global User" key "SecuredGlobalUser" {read show toconnect todisconnect} ancestor organization ancestor project
+        user "Shadow Agent" {all}
+        user "System Conversion Manager" {all}
+        user "System Transition Manager" {all}
+		user "VPLMExperimenter" {all}
+        user "VPLMLocalCrossOrgContextAccess" key "ExtendedOwnerReadAccess" {checkout read show toconnect todisconnect} context owner
+        login user "VPLMAdmin" key "ExtendedModifyAccessForPLMAdmin" {changename checkin modify}
+        login user "VPLMAdmin" key "ExtendedPromoteAccessForPLMAdmin" {demote promote}
+        login user "VPLMAdmin" key "ExtendedReadAccessForPLMAdmin" {checkout read show toconnect todisconnect}
+    }
+    state "Active" {
+        registeredname "state_Active"
+        !enforcereserveaccess
+        majorrevision
+        !minorrevision
+        version
+        !promote
+        checkouthistory
+        !published
+        public key "ExtendedPublicReadAccess" {read show toconnect todisconnect} ancestor organization public maturity filter "expression[OrganizationPublicAccess]"
+        user "Access Grantor" {checkin checkout fromconnect fromdisconnect grant lock modify read revoke show toconnect todisconnect unlock}
+        user "Global User" {checkin checkout fromconnect fromdisconnect lock modify read revise show toconnect todisconnect unlock} filter "(to[Thread].from.current.access[all] == true) || (to[Thread].from.current.access[read] == true)"
+        user "Global User" key "SpecificOwnerAccess" {all} single organization single project context owner
+        user "Global User" key "owner" {all} single organization single project context owner
+        user "Grant" key "grant_key" {all} single project
+        user "VPLMAdmin" {changevault create delete fromconnect fromdisconnect modify promote read schedule show toconnect todisconnect} single organization single project
+        user "VPLMCreator" {create delete fromconnect fromdisconnect modify read show toconnect todisconnect} single organization single project
+        user "VPLMLocalCrossOrgContextAccess" key "ExtendedContextualPrivateReadAccess" {checkout read show toconnect todisconnect} single project
+        user "VPLMLocalCrossPrjContextAccess" key "ExtendedPublicReadAccess" {checkout read show toconnect todisconnect} ancestor organization public maturity filter "expression[OrganizationPublicAccess]"
+        user "VPLMProjectLeader" {create delete fromconnect fromdisconnect modify read show toconnect todisconnect} single organization single project
+        user "VPLMSecuredCrossAccess" key "ExtendedReadAccessForPublicGuest" {checkout read show toconnect todisconnect} single organization single project public maturity
+        user "VPLMViewer" {read show} single organization single project
+        user "VPLMViewer" key "SpecificOwnerAccess" {all} single organization single project context owner
+        login owner key "VPLMStrictOrgOwnershipIsFALSE" {demote promote} single project filter "(!expression[VPLMStrictOrgOwnership])"
+        login owner key "VPLMStrictOrgOwnershipIsTRUE" {demote promote} single organization single project
+        login user "VPLMAdmin" key "ExtendedCreateAccessForPLMAdmin" {create delete revise}
+        login user "VPLMExperimenter" key "ExtendedConnectDisconnectAccess" {fromconnect fromdisconnect} single organization single project
+        login user "VPLMExperimenter" key "ExtendedCreateAccessForPrivateAuthoring" {create delete revise} single organization single project context owner
+        login user "VPLMExperimenter" key "VPLMStrictOrgOwnershipIsFALSE1" {changename checkin modify} single project filter "(!expression[VPLMStrictOwnership_Evaluation]) && (!expression[VPLMStrictOrgOwnership])"
+        login user "VPLMExperimenter" key "VPLMStrictOrgOwnershipIsFALSE2" {changename checkin modify} single project context owner filter "(!expression[VPLMStrictOrgOwnership])"
+        login user "VPLMExperimenter" key "VPLMStrictOrgOwnershipIsTRUE1" {changename checkin modify} single organization single project filter "(!expression[VPLMStrictOwnership_Evaluation])"
+        login user "VPLMExperimenter" key "VPLMStrictOrgOwnershipIsTRUE2" {changename checkin modify} single organization single project context owner
+        login user "VPLMProjectAdministrator" key "ExtendedModifyAccessForPrjAdmin" {changename checkin modify} single project
+        login user "VPLMProjectLeader" key "ExtendedCreateAccessForTechnicalLeader" {create delete revise} single organization single project
+        login user "VPLMProjectLeader" key "VPLMStrictOrgOwnershipIsFALSE" {changename checkin demote modify promote} single project filter "(!expression[VPLMStrictOrgOwnership])"
+        login user "VPLMProjectLeader" key "VPLMStrictOrgOwnershipIsTRUE" {changename checkin demote modify promote} single organization single project
+    }
+    state "Inactive" {
+        registeredname "state_Inactive"
+        !enforcereserveaccess
+        majorrevision
+        !minorrevision
+        version
+        !promote
+        checkouthistory
+        !published
+        public key "ExtendedPublicReadAccess" {read show toconnect todisconnect} ancestor organization public maturity filter "expression[OrganizationPublicAccess]"
+        user "Global User" {todisconnect}
+        user "Global User" key "SpecificOwnerAccess" {all} single organization single project context owner
+        user "Global User" key "owner" {all} single organization single project context owner
+        user "Grant" key "grant_key" {all} single project
+        user "VPLMAdmin" {changevault create delete demote fromconnect fromdisconnect modify read schedule show toconnect todisconnect} single organization single project
+        user "VPLMCreator" {create delete fromconnect fromdisconnect modify read show toconnect todisconnect} single organization single project
+        user "VPLMLocalCrossOrgContextAccess" key "ExtendedContextualPrivateReadAccess" {checkout read show toconnect todisconnect} single project
+        user "VPLMLocalCrossPrjContextAccess" key "ExtendedPublicReadAccess" {checkout read show toconnect todisconnect} ancestor organization notprivate maturity filter "expression[OrganizationPublicAccess]"
+        user "VPLMProjectLeader" {create delete fromconnect fromdisconnect modify read show toconnect todisconnect} single organization single project
+        user "VPLMSecuredCrossAccess" key "ExtendedReadAccessForPublicGuest" {checkout read show toconnect todisconnect} single organization single project notprivate maturity
+        user "VPLMViewer" {read show} single organization single project
+        user "VPLMViewer" key "SpecificOwnerAccess" {all} single organization single project context owner
+        login user "VPLMAdmin" key "ExtendedCreateAccessForPLMAdmin" {delete}
+        login user "VPLMExperimenter" key "ExtendedCreateAccessForPrivateAuthoring" {delete} single organization single project context owner
+        login user "VPLMProjectLeader" key "ExtendedCreateAccessForTechnicalLeader" {delete} single organization single project
+    }
+    ################################################## Info Start
+    property "original name" value "Thread"
+    property "application" value "Framework"
+    property "version" value "R420"
+    ################################################## Info End
+}

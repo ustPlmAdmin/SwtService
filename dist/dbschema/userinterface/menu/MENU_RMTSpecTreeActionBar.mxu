@@ -1,0 +1,46 @@
+################################################################################
+# MENU_RMTSpecTreeActionBar.mxu
+#
+#            This file describes the target of a Configuration Item.
+################################################################################
+
+mxUpdate menu "${NAME}" {
+    symbolicname "menu_RMTSpecTreeActionBar"
+    description ""
+    label "emxRequirements.Menu.Actions"
+    href ""
+    alt ""
+    setting "Image" "${COMMON_DIR}/images/iconActionActions.png"
+    setting "Registered Suite" "Requirements"
+    menu "RMTSpecTreeCreateNew"
+    menu "RMTSpecTreeAddExisting"
+    menu "RMTConfigurationManagementActions"
+    menu "RMTSpecTreeExportContent"
+    command "RMTStructureCompare"
+    command "IGARMTSubscribeStructureNewDiscussion"
+    command "IGARMTUnSubscribeStructureNewDiscussion"
+    command "RMTSpecRichTextEditor"
+    command "RMTImportStructurePreCheck"
+    command "RMTSpecStructureHistory"
+    menu "ECMChangeToolbar"
+    command "APPSubscriptionMultiObject"
+    command "AEFSeparator2"
+    command "RMTRaiseECActionLink"
+    command "RMTAttachECCategory"
+    command "RMTCreateRevisionRequirementActionLink"
+    command "RMTUpdateRevision"
+    command "RMTReplaceByNewRevision"
+    command "RMTReplaceByLastRevision"
+    command "RMTSpecTreeReserve"
+    command "RMTSpecTreeUnreserve"
+    menu "RMTSpecDeleteActions"
+    menu "RMTMenuLinkSubDerived"
+    command "RMTDisplayGraph"
+    command "RMTDisplayGraph"
+    command "RMTRichTextEditorExportTest"
+    ################################################## Info Start
+    property "original name" value "RMTSpecTreeActionBar"
+    property "application" value "RequirementsManagementBase"
+    property "version" value "V6R2018x"
+    ################################################## Info End
+}

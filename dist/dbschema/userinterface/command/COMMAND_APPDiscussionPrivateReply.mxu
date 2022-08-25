@@ -1,0 +1,26 @@
+################################################################################
+# COMMAND_APPDiscussionPrivateReply.mxu
+#
+#            This file describes the target of a Configuration Item.
+################################################################################
+
+mxUpdate command "${NAME}" {
+    symbolicname "command_APPDiscussionPrivateReply"
+    description "Subscription"
+    label "emxComponents.Common.PrivateReply"
+    href "${COMMON_DIR}/emxForm.jsp?form=APPCreateDiscussion&formHeader=emxComponents.Discussion.Reply&HelpMarker=emxhelpdiscussionreplycreate&mode=edit&showPageURLIcon=false&Export=false&findMxLink=false&DiscType=Private&postProcessURL=../components/emxComponentsDiscussionCreateProcess.jsp&submitAction=doNothing&preProcessJavaScript=clearMessageInDiscussionReply"
+    alt "emxComponents.Common.PrivateReply"
+    user "all"
+    setting "Access Expression" "false"
+    setting "Access Function" "isPrivateUser"
+    setting "Access Program" "emxDiscussion"
+    setting "Image" "../common/images/iconActionPrivateReply.png"
+    setting "Popup Modal" "false"
+    setting "Registered Suite" "Components"
+    setting "Target Location" "slidein"
+    ################################################## Info Start
+    property "original name" value "APPDiscussionPrivateReply"
+    property "application" value "CommonComponents"
+    property "version" value "R419"
+    ################################################## Info End
+}

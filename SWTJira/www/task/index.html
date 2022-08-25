@@ -1,0 +1,260 @@
+<div class="col align-start-center flex">
+    <div class="col content flex">
+        <div class="row path" style="margin-top: 24px">
+            <a class="path-link" href="#/projects">Проекты</a>
+            /
+            <a class="path-link" href="#/project/{{project.project_code}}">{{project.project_name}} - {{project.project_department}}</a>
+            /
+            <a class="path-link" href="#">{{project.project_code}}-{{task.task_id}}</a>
+        </div>
+        <h2>Открытые задачи</h2>
+
+        <div class="row flex">
+            <div class="col left-panel">
+
+                <input type="text" class="search" placeholder="Поиск..." style="margin-bottom: 12px"
+                       ng-model="searchText" ng-change="changeSearch()">
+
+                <md-content ng-repeat="item in taskFiltered" class="col task-left-panel" ng-click="update(item.task_id)" md-ink-ripple>
+                    <div class="row">
+                        <img src="{{ type_logo(item.task_type) }}" class="task-type"/>
+                        <a href="#/project/{{project.project_code}}/task/{{item.task_id}}">{{project.project_code}}-{{item.task_id}}</a>
+                        <div class="flex"></div>
+                    </div>
+                    <span class="flex" style="margin-top: 8px">{{item.task_title}}</span>
+                </md-content>
+            </div>
+
+            <div class="col fill" style="padding-left:32px;">
+                <div class="row align-center-center" style="height: 34px">
+                    <img src="{{ type_logo(task.task_type) }}" class="task-type">
+                    <a href="#/project/{{project.project_code}}/task/{{item.task_id}}">{{project.project_code}}-{{task.task_id}}</a>
+                    <!--<md-button class="task-menu-item" ng-click="copyTaskLink()" style="margin-left: 20px">
+                        <md-icon md-svg-src="img/url.svg"></md-icon>
+                        Копировать ссылку
+                    </md-button>-->
+                    <div class="flex"></div>
+                </div>
+                <div class="row" style=" overflow: auto">
+                    <div class="col flex center-panel" style="margin-right: 20px">
+                        <div class="row">
+                            <div class="col flex center-panel">
+                                <h2>{{task.task_title}}</h2>
+                                <div class="col">
+                                    <h4>Описание задачи</h4>
+                                    <div>
+                                        {{task.task_description}}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col task-files">
+                                <img src="gif/prd123.gif"  style="width: 200px; height: 200px; border-radius: 4px">
+                                <md-button class="row" style="margin-top: 6px">
+                                    <img src="img/prd-logo.png" style="width: 24px; height: 24px; margin-right: 6px"/>
+                                    prd123
+                                </md-button>
+                            </div>
+                        </div>
+
+                        <div class="col">
+                            <h4>Вложения</h4>
+                            <div class="row layout-wrap task-files">
+                                <div class=" col align-center-center" ng-repeat="file in getFiles(null)">
+                                    <md-content class="task-file row align-center-center" ng-click="fileDownload(file)"
+                                                md-ink-ripple>
+                                        <img src="img/file/{{fileIcon(file.file_name)}}" style="width: 50px; height: 50px"
+                                             onerror="this.onerror=null; this.src='img/file/none.png'">
+                                    </md-content>
+                                    <div><span>{{fileName(file.file_name)}}</span></div>
+                                </div>
+                                <md-content class="task-file row align-center-center " md-ink-ripple
+                                            ng-click="fileUpload()">
+                                    <img src="img/add-file.svg" style="width: 32px; height: 32px">
+                                </md-content>
+                            </div>
+                        </div>
+
+                        <div class="col">
+                            <h4>Комментарии</h4>
+                            <form class="row message" ng-submit="addComment()">
+                                <img src="{{user_logo(user_login)}}" class="big-user-logo"
+                                     onerror="this.onerror=null; this.src='img/user.svg'"/>
+                                <input type="text" ng-model="comment_text" class="new-message flex"
+                                       placeholder="Напишите комментарий..." required>
+                                <md-button class="md-raised" style="margin: 2px 0 2px 12px; width: 120px;"
+                                           type="submit">Отправить
+                                </md-button>
+                            </form>
+                        </div>
+                        <div class="col">
+                            <div class="row message" ng-repeat="comment in comments">
+                                <img src="{{user_logo(comment.user_login)}}" class="mid-user-logo"
+                                     onerror="this.onerror = null; this.src = 'img/user.svg'"/>
+                                <div class="col">
+                                    <div class="row">
+                                        <span style="font-weight: 600">{{users[comment.user_login]}}</span>
+                                        <span style="margin-left: 8px">{{time_to_text(comment.comment_created)}}</span>
+                                        <span class="message-action"
+                                              ng-click="delComment(comment.comment_id)">Удалить</span>
+                                    </div>
+                                    <span style="margin-top: 4px">{{comment.comment_text}}</span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="col right-panel" style="width: 250px">
+                        <div class="col status-bar">
+                            <md-button class="md-raised md-primary" style="background-color: gray"
+                                       ng-if="member_role == 'manager' && task.task_status == 'opened'" >
+                                В работе
+                            </md-button>
+                            <md-button class="md-raised md-primary" style="background-color: orange" ng-click="changeStatus('testing')"
+                                       ng-if="member_role != 'manager' && task.task_status == 'opened'">
+                                Передать на проверку
+                            </md-button>
+                            <md-button class="md-raised md-primary" style="background-color: gray" ng-click="changeStatus('opened')"
+                                       ng-if="member_role != 'manager'&& task.task_status == 'testing'">
+                                Вернуть в работу
+                            </md-button>
+                            <md-button class="md-raised md-primary" style="background-color: orange" ng-click="changeStatus('closed')"
+                                       ng-if="member_role == 'manager' && task.task_status == 'testing'">
+                                Принять задачу
+                            </md-button>
+                            <md-button class="md-raised md-primary" style="background-color: red" ng-click="changeStatus('opened')"
+                                       ng-if="member_role == 'manager' && task.task_status == 'testing'">
+                                Отправить на переделку
+                            </md-button>
+                            <md-button class="md-raised md-primary" style="background-color: gray"
+                                       ng-if="task.task_status == 'closed'">
+                                Закрыта
+                            </md-button>
+                        </div>
+                        <div class="col">
+                            <span class="right-panel-title">Автор</span>
+                            <md-button class="row">
+                                <img src="{{user_logo(task.user_login)}}" class="user-logo"  onerror="this.onerror = null; this.src = 'img/user.svg'"/>
+                                <span>{{users[task.user_login]}}</span>
+                            </md-button>
+                        </div>
+                        <div class="col">
+                            <span class="right-panel-title">Исполнитель</span>
+                            <md-button class="row"  ng-repeat="worker in workers">
+                                <img src="{{user_logo(worker)}}" class="user-logo"  onerror="this.onerror = null; this.src = 'img/user.svg'"/>
+                                <span>{{users[worker]}}</span>
+                            </md-button>
+                        </div>
+                        <div class="col">
+                            <span class="right-panel-title">Проверящие</span>
+                            <md-button class="row"  ng-repeat="manager in managers">
+                                <img src="{{user_logo(manager)}}" class="user-logo"  onerror="this.onerror = null; this.src = 'img/user.svg'"/>
+                                <span>{{users[manager]}}</span>
+                            </md-button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .path-link {
+        margin: 0 4px;
+    }
+
+    .left-panel {
+        background-color: rgb(244, 245, 247);
+        margin-bottom: 16px;
+        border-radius: 4px;
+        padding: 8px;
+        min-width: 254px;
+        border-radius: 4px;
+    }
+
+    .task-left-panel {
+        background-color: rgb(255, 255, 255);
+        padding: 12px;
+        border-top: 0px;
+        border-bottom: 1px solid rgb(223, 225, 230);
+        border-left: 1px solid rgb(235, 236, 240);
+        border-right: 1px solid rgb(223, 225, 230);
+        border-radius: 0px 0px 4px 4px;
+    }
+
+    .right-panel > *, .center-panel > * {
+        margin-bottom: 16px;
+    }
+
+    .right-panel-title {
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .message {
+        margin-top: 24px;
+    }
+
+    .message-action {
+        color: rgb(107, 119, 140);
+        margin-left: 12px;
+    }
+
+    .message-action:hover {
+        color: rgb(39, 43, 57);
+        text-decoration: underline;
+        cursor: pointer;
+    }
+
+    .search, .new-message {
+        border: 2px solid #eeeeee;
+        border-radius: 4px;
+        font-size: 16px;
+        background-color: #f9f9f9;
+        padding: 0 20px 0 20px;
+    }
+
+    .new-message {
+        width: 300px;
+    }
+
+
+    .search {
+        font-size: 16px;
+        background-color: #f9f9f9;
+        background-image: url('img/search.png');
+        background-repeat: no-repeat;
+        background-position: 10px 7px;
+        padding: 8px 20px 8px 40px;
+    }
+
+    .task-menu-item {
+        background-color: rgba(9, 30, 66, 0.04);
+        margin-right: 12px;
+    }
+
+
+    .task-files {
+        border: 1px dashed #eeeeee;
+        border-radius: 10px;
+        padding: 6px;
+        margin: 0;
+    }
+
+    .task-file {
+        border: 1px solid #eeeeee;
+        background-color: #fcfcfc;
+        margin: 6px 6px 2px 6px;
+        width: 100px;
+        height: 100px;
+        border-radius: 6px;
+        transition: background-color 0.5s ease;
+        user-select: none;
+    }
+
+    .task-file:hover {
+        cursor: pointer;
+        background-color: #ededed;
+    }
+
+</style>

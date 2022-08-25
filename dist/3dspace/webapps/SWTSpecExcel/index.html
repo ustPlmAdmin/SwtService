@@ -1,0 +1,27 @@
+<html lang="ru">
+<head>
+    <title>Отдел PLM систем</title>
+    <meta charset="utf8">
+    <link rel="stylesheet" href="../SWTUtils/angular/angular-material.min.css">
+    <link rel="stylesheet" href="../SWTUtils/base.css">
+    <link rel="stylesheet" href="custom.css">
+    <script type="javascript">
+        require(['DS/SWTSpecExcel/controller'], function (controller) {
+            widget.addEvent('onLoad', function () {
+                controller()
+            });
+        });
+    </script>
+</head>
+<body class="layout-column layout-align-center-center">
+<div class="layout-column"  style="height: 100%; padding: 20px; overflow: auto">
+    <div class="logo"></div>
+    <h2>Выгрузка спецификации</h2>
+    <span id="message"></span>
+    <div class="layout-row">
+        <input id="object_name" class="bar" type="text" placeholder="Имя сборки">
+        <button id="export">Выгрузить в Excel</button>
+    </div>
+</div>
+</body>
+</html>

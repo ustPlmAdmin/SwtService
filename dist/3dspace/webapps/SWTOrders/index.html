@@ -1,0 +1,36 @@
+<html>
+<head>
+    <title>Отдел PLM систем</title>
+    <link rel="stylesheet" href="../SWTUtils/angular/angular-material.min.css">
+    <link rel="stylesheet" href="../SWTUtils/base.css">
+    <link rel="stylesheet" href="custom.css">
+    <script type="javascript">
+        require(["DS/SWTOrders/controller", "DS/SWTUtils/api"], function (controller, api) {
+            api.init(function () {
+                controller()
+            })
+        });
+    </script>
+</head>
+<body class="layout-column layout-align-center-center">
+<div class="layout-column"  style="height: 100%; padding: 20px; overflow: auto">
+    <div class="logo"></div>
+    <h1 id="loading">Загрузка...</h1>
+    <div id="data_container" class="layout-column"  style="display: none">
+        <h2>Задачи из ERP</h2>
+        <table id="order_tasks" border="0" width="100%">
+            <tr>
+                <td style="width: 150px">Задача</td>
+                <td style="width: 150px">Заказ</td>
+                <td style="width: 150px">Наименование</td>
+                <td style="width: auto">Маршрут</td>
+                <td style="width: auto">Результат</td>
+                <td style="width: auto">Старт</td>
+                <td style="width: auto">Финиш</td>
+            </tr>
+        </table>
+        <button id="create_route" style="margin-top: 16px">Создать маршруты</button>
+    </div>
+</div>
+</body>
+</html>

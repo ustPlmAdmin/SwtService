@@ -1,0 +1,10 @@
+
+mxUpdate command "${NAME}" {
+    description "emxFramework.Label.SWT.Operational"
+    label "emxFramework.Label.SWT.Operational"
+    href "${COMMON_DIR}/swtRedirect.jsp?path=sw/operational"
+    alt "emxFramework.Label.SWT.Operational"
+    user "all"
+    setting "Image" "${COMMON_DIR}/images/iconActionExportToDocument.png"
+    setting "Popup Modal" "true"
+}

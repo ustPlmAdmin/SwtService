@@ -1,0 +1,203 @@
+body, html {
+    height: 100%;
+    margin: 0;
+    padding: 0
+}
+
+.fill {
+    margin: 0;
+    width: 100%;
+    min-height: 100%;
+    height: 100%
+}
+
+.col, .row {;
+    display: flex
+}
+
+.col {
+    flex-direction: column
+}
+
+.row {
+    flex-direction: row
+}
+
+.wrap {
+    flex-wrap: wrap;
+}
+
+body, .col > *, .row > * {
+    box-sizing: border-box
+}
+
+.flex {
+    flex: 1
+}
+
+.flex-10, .row > .flex-10 {
+    flex: 1 1 100%;
+    max-width: 10%;
+    max-height: 100%;
+}
+
+.col > .flex-10 {
+    flex: 1 1 100%;
+    max-width: 100%;
+    max-height: 10%;
+}
+
+.flex-20, .row > .flex-20 {
+    flex: 1 1 100%;
+    max-width: 20%;
+    max-height: 100%;
+}
+
+.col > .flex-20 {
+    flex: 1 1 100%;
+    max-width: 100%;
+    max-height: 20%;
+}
+
+.flex-25, .row > .flex-25 {
+    flex: 1 1 100%;
+    max-width: 25%;
+    max-height: 100%;
+}
+
+.col > .flex-25 {
+    flex: 1 1 100%;
+    max-width: 100%;
+    max-height: 25%;
+}
+
+.flex-30, .row > .flex-30 {
+    flex: 1 1 100%;
+    max-width: 30%;
+    max-height: 100%;
+}
+
+.col > .flex-30 {
+    flex: 1 1 100%;
+    max-width: 100%;
+    max-height: 30%;
+}
+
+.flex-40, .row > .flex-40 {
+    flex: 1 1 100%;
+    max-width: 40%;
+    max-height: 100%;
+}
+
+.col > .flex-40 {
+    flex: 1 1 100%;
+    max-width: 100%;
+    max-height: 40%;
+}
+
+.flex-50, .row > .flex-50 {
+    flex: 1 1 100%;
+    max-width: 50%;
+    max-height: 100%;
+}
+
+.col > .flex-50 {
+    flex: 1 1 100%;
+    max-width: 100%;
+    max-height: 50%;
+}
+
+.flex-33 {
+    max-width: 33.33%
+}
+
+.flex-33, .flex-66 {
+    flex: 1 1 100%;
+    max-height: 100%;
+}
+
+.flex-66 {
+    max-width: 66.66%
+}
+
+.row > .flex-33 {
+    flex: 1 1 33.33%
+}
+
+.row > .flex-66 {
+    flex: 1 1 66.66%
+}
+
+.col > .flex-33 {
+    flex: 1 1 33.33%
+}
+
+.col > .flex-66 {
+    flex: 1 1 66.66%
+}
+
+.row > .flex-33 {
+    max-width: 33.33%
+}
+
+.row > .flex-33, .row > .flex-66 {
+    flex: 1 1 100%;
+    max-height: 100%;
+}
+
+.row > .flex-66 {
+    max-width: 66.66%
+}
+
+.row > .flex {
+    min-width: 0
+}
+
+.col > .flex-33 {
+    max-height: 33.33%
+}
+
+.col > .flex-33, .col > .flex-66 {
+    flex: 1 1 100%;
+    max-width: 100%;
+}
+
+.col > .flex-66 {
+    max-height: 66.66%
+}
+
+.col > .flex {
+    min-height: 0
+}
+
+.align-start, .align-start-center, .align-start-end, .align-start-start {
+    justify-content: flex-start
+}
+
+.align-center, .align-center-center, .align-center-end, .align-center-start {
+    justify-content: center
+}
+
+.align-end, .align-end-center, .align-end-end, .align-end-start {
+    justify-content: flex-end
+}
+
+.align-center-start, .align-end-start, .align-start-start {
+    align-items: flex-start;
+    align-content: flex-start
+}
+
+.align-center-center, .align-end-center, .align-start-center {
+    align-items: center;
+    align-content: center;
+    max-width: 100%
+}
+
+.align-center-center > *, .align-end-center > *, .align-start-center > * {
+    max-width: 100%;
+}
+
+.align-center-end, .align-end-end, .align-start-end {
+    align-items: flex-end;
+    align-content: flex-end
+}

@@ -1,0 +1,220 @@
+md-progress-linear {
+    position: absolute;
+}
+
+body {
+    background-color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    color: #172b4d;
+    font-size: 14px;
+    font-weight: 400;
+    font-style: normal;
+    line-height: 20px;
+}
+
+.header {
+    height: 56px;
+    padding: 0 30px 0 40px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Параметры тени */
+}
+
+.logo {
+    width: 130px;
+    height: 40px;
+    cursor: pointer;
+    margin-right: 12px;
+}
+
+button > md-icon {
+    min-width: 18px;
+    min-height: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.user-icon {
+    width: 40px;
+    margin-left: 12px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-style: inherit;
+    color: rgb(23, 43, 77);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin: 0;
+}
+
+h1 {
+    font-size: 2.07143em;
+    font-weight: 600;
+    line-height: 50px;
+}
+
+h2 {
+    font-size: 1.71429em;
+    font-weight: 500;
+    line-height: 32px;
+}
+
+h3 {
+    line-height: 24px;
+}
+
+
+.md-button {
+    margin: 0;
+}
+
+md-dialog > * {
+    padding: 12px 40px;
+}
+
+md-input-container {
+    margin: 0;
+}
+
+
+.task-type {
+    width: 20px;
+    height: 20px;
+    margin-right: 12px
+}
+
+
+/* width */
+::-webkit-scrollbar {
+    width: 5px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: #e1e1e1;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.modal-header {
+    height: 80px;
+    box-shadow: 2px 2px #E5E5E5;
+}
+
+.modal-content {
+    padding: 30px 40px;
+}
+
+.modal-content > * {
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+.error-message {
+    color: red;
+}
+
+div, h1, h2, h3, h4, h5, md-content {
+    word-wrap: break-word;
+}
+
+.md-errors-spacer {
+    display: none;
+}
+
+md-autocomplete md-autocomplete-wrap md-progress-linear.md-inline {
+    bottom: 0;
+}
+
+md-select:not([disabled]):focus .md-select-value {
+    border-color: rgb(229, 229, 229);
+}
+
+.md-button {
+    text-transform: none;
+}
+
+
+*:focus {
+    outline: none;
+    border: 0;
+}
+
+
+.header-menu-item {
+    width: 16px;
+    height: 16px;
+    margin: auto 12px auto 0;
+}
+
+
+.path-link {
+    margin: 0 4px;
+}
+
+.content {
+    max-width: 1280px;
+    width: 100%;
+    margin: 12px 30px 12px 40px;
+}
+
+
+.content > * {
+    margin-bottom: 12px;
+}
+
+
+.grid-line {
+    height: 40px;
+    border-bottom: 1px solid #eeeeee;
+    transition: background-color 0.5s ease;
+    background-color: white;
+}
+
+.grid-line:hover {
+    cursor: pointer;
+    background-color: #ededed;
+}
+
+.grid-header {
+    border-bottom: 1px solid #d0d0d0;
+    font-weight: 600;
+}
+
+
+.user-logo {
+    width: 24px;
+    height: 24px;
+    margin-right: 8px;
+    border-radius: 12px;
+}
+
+
+.priority-logo {
+    width: 20px;
+    height: 20px;
+}
+
+.big-user-logo {
+    width: 40px;
+    height: 40px;
+    margin: 0 12px 0 0;
+    border-radius: 16px
+}
+
+.mid-user-logo {
+    width: 32px;
+    height: 32px;
+    margin: 0 12px 0 0;
+    border-radius: 16px
+}
+
+md-datepicker > * {
+    margin: 0;
+}
