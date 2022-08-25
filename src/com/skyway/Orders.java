@@ -79,12 +79,13 @@ public class Orders extends SkyService {
     @Path("/task/create")
     public Response createTask(@javax.ws.rs.core.Context HttpServletRequest request) throws Exception {
         Context ctx = auth(request, "m.kim");
+
         try {
 
             TaskCreateRequest taskProperties = (TaskCreateRequest) getRequestObject(request, TaskCreateRequest.class);
 
-//            if (ctx == null)
-//                return Response.status(HttpServletResponse.SC_UNAUTHORIZED).build();
+            if (ctx == null)
+                return Response.status(HttpServletResponse.SC_UNAUTHORIZED).build();
 
             if (taskProperties.task_name == null || taskProperties.task_name.isEmpty() || taskProperties.task_name.contains("\""))
                 throw new NullPointerException();
@@ -201,7 +202,6 @@ public class Orders extends SkyService {
         } catch (Exception e) {
             return error(e);
         } finally {
-
             finish(request);
         }
     }

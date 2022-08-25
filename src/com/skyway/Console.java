@@ -6,6 +6,10 @@ import com.matrixone.apps.domain.DomainObject;
 import com.matrixone.apps.domain.util.ContextUtil;
 import com.matrixone.apps.domain.util.FrameworkException;
 import matrix.db.Context;
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.hssf.usermodel.HSSFHyperlink;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.*;
 
 import javax.security.sasl.AuthenticationException;
 import javax.servlet.http.HttpServletRequest;
@@ -15,7 +19,9 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.*;
+import java.io.ByteArrayOutputStream;
 
+import static org.apache.poi.ss.usermodel.CellStyle.*;
 /**
  * Бекэнд виджета SWT Console
  * */
@@ -24,8 +30,8 @@ public class Console extends SpecUtils {
     public Context authenticate(HttpServletRequest request) throws IOException {
         Context context = super.authenticate(request);
         String username = context.getSession().getUserName();
-        if (username.equals("m.kim") || username.equals("m.gaiduk") || username.equals("a.pagoda") || username.equals("a.pavlovich"))
-            return context;
+        if (username.equals("m.kim") || username.equals("s.beresnev") || username.equals("a.pagoda") || username.equals("a.pavlovich"))
+        return context;
         throw new AuthenticationException();
     }
 
@@ -159,6 +165,160 @@ public class Console extends SpecUtils {
             finish(request);
         }
     }
+
+    @GET
+    @Path("/ca_asm_info")
+    public Response ca_asm_info(@javax.ws.rs.core.Context HttpServletRequest request, @QueryParam("name") String root_ca_name) {
+        try {
+
+            Context ctx = internalAuth(getBaseUrl(request), "m.kim", null);
+            Object retVal = null;
+
+            List<Map<String, String>> oList = findObjectsWhere(ctx, "*", root_ca_name, "attribute[IGAPartEngineering.IGASpecChapter]=='Assemblies'","id","type","name");
+
+            if(! oList.isEmpty()) {
+                List<Map<String, String>> objs = findRows(ctx, "*", root_ca_name,
+                        "from[VPMInstance].to.id:partId",
+                        "from[VPMInstance].to.type:partType",
+                        "from[VPMInstance].to.attribute[IGAPartEngineering.IGASpecChapter]:partAsmType",
+                        "from[VPMInstance].to.name:partName");
+
+                Workbook book = new HSSFWorkbook();
+                Sheet sheet = book.createSheet("Main");
+                Map<String, CellStyle> styles = createStyles(book);
+
+                addAsmInfoHeader(sheet,oList,styles.get("headerObjText"));
+                addTitles(sheet,styles.get("header"));
+                addRowData(sheet,objs,styles.get("data"));
+
+                for (int i = 0; i <= 4; i++) {
+                    sheet.autoSizeColumn(i);
+                }
+
+                return this.excel(book,root_ca_name);
+            }
+
+            return response("Object not exists or assembly");
+        } catch (Exception e) {
+            return error(e);
+        } finally {
+            finish(request);
+        }
+    }
+
+    void addRowData(Sheet sheet, List<Map<String, String>> objs, CellStyle style ){
+
+        int columnNumber = 1;
+        int rowNumber = 3;
+
+        for( Map obj : objs){
+            Row row = sheet.createRow(rowNumber);
+            addCell(row, columnNumber++, obj.get("partId"), null, style);
+            addCell(row, columnNumber++, obj.get("partType"), null, style);
+            addCell(row, columnNumber++, obj.get("partAsmType"), null, style);
+            addCell(row, columnNumber++, obj.get("partName"), null, style);
+            columnNumber = 1 ;
+            rowNumber = rowNumber + 1;
+
+        }
+
+    }
+
+    void addAsmInfoHeader(Sheet sheet, List<Map<String, String>> data,  CellStyle style){
+
+        Row row = sheet.createRow(0);
+
+        addCell(row, 0, "Assembly", null, style);
+        addCell(row, 1,"id : " + data.get(0).get("id") + '\n' +
+                        "type : " + data.get(0).get("type") + '\n' +
+                        "name : " + data.get(0).get("name"),
+                null,  style);
+
+    }
+
+    void addTitles(Sheet sheet, CellStyle style) {
+        Row row = sheet.createRow(2);
+        row.setHeightInPoints(30);
+
+        addCell(row, 1, "Id объекта", null, style);
+        addCell(row, 2, "Тип", null, style);
+        addCell(row, 3, "Имя", null, style);
+        addCell(row, 4, "Сборка", null, style);
+
+    }
+
+    Map<String, CellStyle> createStyles(Workbook book) {
+        Map<String, CellStyle> styles = new LinkedHashMap<>();
+
+        CellStyle style = book.createCellStyle();
+        Font font = book.createFont();
+        font.setFontName("Arial");
+        font.setColor(Font.COLOR_RED);
+        font.setBoldweight(Font.BOLDWEIGHT_BOLD);
+        style.setFont(font);
+        style.setAlignment(ALIGN_CENTER);
+        style.setVerticalAlignment(VERTICAL_CENTER);
+        style.setWrapText(true);
+        styles.put("headerObjText", style);
+
+        CellStyle style_h = book.createCellStyle();
+        Font font_h = book.createFont();
+        font_h.setBoldweight(Font.BOLDWEIGHT_BOLD);
+        style_h.setFont(font_h);
+        style_h.setAlignment(ALIGN_CENTER);
+        style_h.setVerticalAlignment(VERTICAL_CENTER);
+        style_h.setWrapText(true);
+        style_h.setFillPattern(CellStyle.SOLID_FOREGROUND);
+        style_h.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.index);
+        style_h.setBorderBottom(HSSFCellStyle.BORDER_THIN);
+        style_h.setBorderTop(HSSFCellStyle.BORDER_THIN);
+        style_h.setBorderRight(HSSFCellStyle.BORDER_THIN);
+        style_h.setBorderLeft(HSSFCellStyle.BORDER_THIN);
+        styles.put("header", style_h);
+
+        style = book.createCellStyle();
+        font = book.createFont();
+        style.setFont(font);
+        style.setAlignment(ALIGN_CENTER);
+        style.setVerticalAlignment(VERTICAL_CENTER);
+        style.setBorderBottom(HSSFCellStyle.BORDER_THIN);
+        style.setBorderTop(HSSFCellStyle.BORDER_THIN);
+        style.setBorderRight(HSSFCellStyle.BORDER_THIN);
+        style.setBorderLeft(HSSFCellStyle.BORDER_THIN);
+        style.setWrapText(true);
+        styles.put("data", style);
+
+        return styles;
+    }
+
+    public Response excel(Workbook workbook, String filename) throws IOException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        workbook.write(outputStream);
+        Response.ResponseBuilder responseBuilder = Response.ok(outputStream.toByteArray());
+        responseBuilder.header("Content-Disposition","attachment; filename=" +  new String( filename.getBytes(), "iso-8859-1") + ".xls");
+        return responseBuilder.build();
+    }
+
+    Cell addCell(Row row, Integer columnNumber, Object data, String link, CellStyle style) {
+        Cell cell = row.createCell(columnNumber);
+        if (link != null) {
+            Hyperlink href = new HSSFHyperlink(HSSFHyperlink.LINK_URL);
+            href.setAddress(link);
+            cell.setHyperlink(href);
+        }
+        if (data instanceof String)
+            cell.setCellValue((String) data);
+        else if (data instanceof Integer)
+            cell.setCellValue((Integer) data);
+        else if (data instanceof Double)
+            cell.setCellValue((Double) data);
+        if (style != null)
+            cell.setCellStyle(style);
+
+        return cell;
+
+    }
+
 
     @GET
     @Path("/ca_delete_docs")
