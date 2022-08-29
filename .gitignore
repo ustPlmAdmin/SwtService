@@ -1,0 +1,11 @@
+/out/*
+/dist/*
+/help/*
+/licenses/
+SWTJira/*
+web/*
+scripts/*
+.idea/*
+SWTServices.jar
+dist.rar
+help
