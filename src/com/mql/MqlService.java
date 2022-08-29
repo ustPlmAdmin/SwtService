@@ -558,6 +558,8 @@ public class MqlService extends RestService {
             return dc("aHR0cHM6Ly8zZHNwYWNlLW0wMDEuc3ctdGVjaC5ieTo0NDQ=");
         if (a.getServerName().equals(dc("MTAuMTAuMjUuMjAw")))
             return dc("aHR0cHM6Ly8zZHNwYWNlLXN0dWR5LnN3LXRlY2guYnk6NDQ0");
+        if (a.getServerName().equals("localhost"))
+            return dc("aHR0cHM6Ly8zZHNwYWNlLW0wMDEuc3ctdGVjaC5ieTo0NDQ=");
 
         return dc("aHR0cHM6Ly8zZHNwYWNlLnN3LXRlY2guYnk6NDQ0");
     }

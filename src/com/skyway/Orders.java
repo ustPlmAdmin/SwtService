@@ -42,6 +42,7 @@ import org.apache.xmlbeans.impl.piccolo.util.DuplicateKeyException;
 /**
  * Класс по созданию заказа с 1С
  * */
+@Path("")
 public class Orders extends SkyService {
 
     public Context auth(HttpServletRequest request, String username) throws Exception {
