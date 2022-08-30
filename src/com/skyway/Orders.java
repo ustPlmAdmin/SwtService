@@ -1,48 +1,27 @@
 package com.skyway;
 
 import com.dassault_systemes.platform.ven.apache.commons.net.util.Base64;
-import com.igatec.kanban.entity.KanbanPerson;
-import com.igatec.kanban.entity.KanbanTask;
-import com.matrixone.apps.andpma.AnDPMAConstants;
 import com.matrixone.apps.common.InboxTask;
 import com.matrixone.apps.common.Route;
 import com.matrixone.apps.domain.DomainObject;
-import com.matrixone.apps.domain.DomainRelationship;
-import com.matrixone.apps.domain.util.MapList;
-import com.mql.MqlService;
 import matrix.db.Context;
 import matrix.db.JPO;
-import matrix.db.Relationship;
-import matrix.db.RelationshipType;
-import matrix.util.Mime64;
-import matrix.util.SelectList;
 import matrix.util.StringList;
 
-import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.security.Principal;
 import java.util.*;
 
 import com.matrixone.apps.program.Task;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.xmlbeans.impl.piccolo.util.DuplicateKeyException;
 
 /**
  * Класс по созданию заказа с 1С
  * */
-@Path("")
 public class Orders extends SkyService {
 
     public Context auth(HttpServletRequest request, String username) throws Exception {
@@ -288,6 +267,5 @@ public class Orders extends SkyService {
             finish(request);
         }
     }
-
 
 }

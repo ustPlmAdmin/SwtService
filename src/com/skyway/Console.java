@@ -6,6 +6,7 @@ import com.matrixone.apps.domain.DomainObject;
 import com.matrixone.apps.domain.util.ContextUtil;
 import com.matrixone.apps.domain.util.FrameworkException;
 import matrix.db.Context;
+
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFHyperlink;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -16,16 +17,19 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.io.ByteArrayOutputStream;
+
 
 import static org.apache.poi.ss.usermodel.CellStyle.*;
 /**
  * Бекэнд виджета SWT Console
  * */
-
+@Path("")
 public class Console extends SpecUtils {
 
     public Context authenticate(HttpServletRequest request) throws IOException {
@@ -195,7 +199,6 @@ public class Console extends SpecUtils {
                 for (int i = 0; i <= 4; i++) {
                     sheet.autoSizeColumn(i);
                 }
-
                 return this.excel(book,root_ca_name);
             }
 
@@ -295,10 +298,16 @@ public class Console extends SpecUtils {
     public Response excel(Workbook workbook, String filename) throws IOException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         workbook.write(outputStream);
+        return file(outputStream, filename + ".xls");
+    }
+
+    public Response file(ByteArrayOutputStream outputStream, String filename) {
         Response.ResponseBuilder responseBuilder = Response.ok(outputStream.toByteArray());
-        responseBuilder.header("Content-Disposition","attachment; filename=" +  new String( filename.getBytes(), "iso-8859-1") + ".xls");
+        responseBuilder.type("application/octet-stream");
+        responseBuilder.header("Content-Disposition", "attachment; filename=\"" + filename + "\"");
         return responseBuilder.build();
     }
+
 
     Cell addCell(Row row, Integer columnNumber, Object data, String link, CellStyle style) {
         Cell cell = row.createCell(columnNumber);
