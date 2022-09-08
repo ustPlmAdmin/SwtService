@@ -1,48 +1,31 @@
 package com.skyway;
 
 import com.dassault_systemes.platform.ven.apache.commons.net.util.Base64;
-import com.igatec.kanban.entity.KanbanPerson;
-import com.igatec.kanban.entity.KanbanTask;
-import com.matrixone.apps.andpma.AnDPMAConstants;
 import com.matrixone.apps.common.InboxTask;
 import com.matrixone.apps.common.Route;
 import com.matrixone.apps.domain.DomainObject;
-import com.matrixone.apps.domain.DomainRelationship;
-import com.matrixone.apps.domain.util.MapList;
-import com.mql.MqlService;
+import com.matrixone.apps.domain.util.ContextUtil;
+import com.matrixone.apps.domain.util.FrameworkException;
 import matrix.db.Context;
 import matrix.db.JPO;
-import matrix.db.Relationship;
-import matrix.db.RelationshipType;
-import matrix.util.Mime64;
-import matrix.util.SelectList;
+import matrix.util.MatrixException;
 import matrix.util.StringList;
 
-import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.security.Principal;
 import java.util.*;
 
 import com.matrixone.apps.program.Task;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.xmlbeans.impl.piccolo.util.DuplicateKeyException;
 
 /**
  * Класс по созданию заказа с 1С
  * */
-@Path("")
+
 public class Orders extends SkyService {
 
     public Context auth(HttpServletRequest request, String username) throws Exception {
@@ -79,7 +62,7 @@ public class Orders extends SkyService {
     @POST
     @Path("/task/create")
     public Response createTask(@javax.ws.rs.core.Context HttpServletRequest request) throws Exception {
-        Context ctx = auth(request, "m.kim");
+        Context ctx = authenticate(request);
 
         try {
 
@@ -161,6 +144,9 @@ public class Orders extends SkyService {
             relatedInfoMap.put("Calendar", "");
             relatedInfoMap.put("deliverableId", null);
 
+
+            ContextUtil.startTransaction(ctx, true);
+
             Task task = new Task();
             task = task.createTask(ctx,
                     basicTaskInfoMap,
@@ -197,12 +183,15 @@ public class Orders extends SkyService {
             Map<String, String> result = new LinkedHashMap<>();
             result.put("task_name", task.getName());
 
-            routeCreate(request);
+            Response route = routeCreate(ctx, task.getId(ctx));
+            result.put("route_name", (String) String.valueOf(route.getEntity()).subSequence(1, route.getEntity().toString().length()-1));
 
             return response(result);
         } catch (Exception e) {
+            ContextUtil.abortTransaction(ctx);
             return error(e);
         } finally {
+            ContextUtil.commitTransaction(ctx);
             finish(request);
         }
     }
@@ -244,44 +233,10 @@ public class Orders extends SkyService {
 
     @GET
     @Path("/create_routes")
-    public Response routeCreate(@javax.ws.rs.core.Context HttpServletRequest request/*, Context ctx*/) {
+    public Response routeRq(@javax.ws.rs.core.Context HttpServletRequest request) {
         try {
             Context ctx = authenticate(request);
-
-            List<String> task_ids = findObjectsListWhere(ctx, "Task", "*", "attribute[Notes] != ''", "physicalid");
-            for (String task_id : task_ids) {
-                Map<String, String> task = row(ctx, task_id, "from[Object Route].to");
-                String r = row(ctx, task_id, "from[Object Route].to").get("from[Object Route].to");
-                String product_type = row(ctx, task_id, "attribute[Product Type]").get("attribute[Product Type]");
-                String owner = row(ctx, task_id, "attribute[Route Owner]").get("attribute[Route Owner]");
-                String person = row(ctx, task_id, "attribute[IT assignee]").get("attribute[IT assignee]");
-                if (task.get("from[Object Route].to") == null && !product_type.equals("") && product_type != null && !product_type.equals("null") && !owner.equals("") && !person.equals("")) {
-
-                    String[] args;
-                    switch (product_type){
-                        case "assembly": args = new String[]{task_id, null, "56A6EB96000086B06081698B0000005E"}; break;
-                        case "detail": args = new String[]{task_id, null, "56A6EB9600003FA46022334700000334"}; break;
-                        default: throw new NullPointerException();
-                    }
-
-                    String routeId = JPO.invoke(ctx, "emxLifecycle", new String[0], "createRouteFromTemplate", args, String.class);
-
-                    Route route = new Route(routeId);
-                    route.getRouteTasks(ctx, new StringList(), new StringList(), null, false);
-                    route.promote(ctx);
-                    query(ctx, "mod bus \"" + routeId + "\" \"Route Completion Action\" \"Promote Connected Object\"");
-
-                    String itId = row(ctx, route.getObjectId(), "to[Route Task].from.physicalid").get("to[Route Task].from.physicalid");
-                    InboxTask it = (InboxTask) DomainObject.newInstance(ctx, itId);
-                    it.setOwner(ctx, person);
-                    route.setOwner(ctx, owner);
-                    List<String> connectionId = findObjectsListWhere(ctx, "*", it.getName(), "", "relationship[Project Task].physicalid");
-                    query(ctx, "mod connection \"" + connectionId.get(0) + "\" to Person " + person + " - from " + it.getId(ctx));
-
-                }
-            }
-
-            return ok();
+            return routeCreate(ctx, "");
         } catch (Exception e) {
             return error(e);
         } finally {
@@ -289,5 +244,47 @@ public class Orders extends SkyService {
         }
     }
 
+    public Response routeCreate(Context ctx, String task_id) {
+        Route route = new Route();
+        try {
+            Map<String, String> task = row(ctx, task_id, "from[Object Route].to");
+            String product_type = row(ctx, task_id, "attribute[Product Type]").get("attribute[Product Type]");
+            String owner = row(ctx, task_id, "attribute[Route Owner]").get("attribute[Route Owner]");
+            String person = row(ctx, task_id, "attribute[IT assignee]").get("attribute[IT assignee]");
+            if (task.get("from[Object Route].to") == null && !product_type.equals("") && product_type != null && !product_type.equals("null") && !owner.equals("") && !person.equals("")) {
+
+                String[] args;
+                switch (product_type) {
+                    case "assembly":
+                        args = new String[]{task_id, null, "56A6EB96000086B06081698B0000005E"};
+                        break;
+                    case "detail":
+                        args = new String[]{task_id, null, "56A6EB9600003FA46022334700000334"};
+                        break;
+                    default:
+                        throw new NullPointerException();
+                }
+
+                String routeId = JPO.invoke(ctx, "emxLifecycle", new String[0], "createRouteFromTemplate", args, String.class);
+
+                route = new Route(routeId);
+                route.getRouteTasks(ctx, new StringList(), new StringList(), null, false);
+                route.promote(ctx);
+                query(ctx, "mod bus \"" + routeId + "\" \"Route Completion Action\" \"Promote Connected Object\"");
+
+                String itId = row(ctx, route.getObjectId(), "to[Route Task].from.physicalid").get("to[Route Task].from.physicalid");
+                InboxTask it = (InboxTask) DomainObject.newInstance(ctx, itId);
+                it.setOwner(ctx, person);
+                route.setOwner(ctx, owner);
+                List<String> connectionId = findObjectsListWhere(ctx, "*", it.getName(), "", "relationship[Project Task].physicalid");
+                query(ctx, "mod connection \"" + connectionId.get(0) + "\" to Person " + person + " - from " + it.getId(ctx));
+                ContextUtil.commitTransaction(ctx);
+
+            }
+            return response(route.getName());
+        } catch (Exception e) {
+            return error(e);
+        }
+    }
 
 }
