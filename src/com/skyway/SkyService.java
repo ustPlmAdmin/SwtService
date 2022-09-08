@@ -44,7 +44,7 @@ public class SkyService extends MqlService {
     public Response file(ByteArrayOutputStream outputStream, String mimetype, String filename) {
         Response.ResponseBuilder responseBuilder = Response.ok(outputStream.toByteArray());
         responseBuilder.type(mimetype);
-        responseBuilder.header("Content-Disposition", "filename=\"" + filename + "\"");
+        responseBuilder.header("Content-Disposition", "attachment; filename=\"" + filename + "\"");
         return responseBuilder.build();
     }
 

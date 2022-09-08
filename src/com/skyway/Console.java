@@ -6,6 +6,7 @@ import com.matrixone.apps.domain.DomainObject;
 import com.matrixone.apps.domain.util.ContextUtil;
 import com.matrixone.apps.domain.util.FrameworkException;
 import matrix.db.Context;
+
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFHyperlink;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -19,13 +20,12 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.*;
-import java.io.ByteArrayOutputStream;
+
 
 import static org.apache.poi.ss.usermodel.CellStyle.*;
 /**
  * Бекэнд виджета SWT Console
  * */
-
 public class Console extends SpecUtils {
 
     public Context authenticate(HttpServletRequest request) throws IOException {
@@ -195,8 +195,7 @@ public class Console extends SpecUtils {
                 for (int i = 0; i <= 4; i++) {
                     sheet.autoSizeColumn(i);
                 }
-
-                return this.excel(book,root_ca_name);
+                return excel(book,root_ca_name);
             }
 
             return response("Object not exists or assembly");
@@ -290,14 +289,6 @@ public class Console extends SpecUtils {
         styles.put("data", style);
 
         return styles;
-    }
-
-    public Response excel(Workbook workbook, String filename) throws IOException {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        workbook.write(outputStream);
-        Response.ResponseBuilder responseBuilder = Response.ok(outputStream.toByteArray());
-        responseBuilder.header("Content-Disposition","attachment; filename=" +  new String( filename.getBytes(), "iso-8859-1") + ".xls");
-        return responseBuilder.build();
     }
 
     Cell addCell(Row row, Integer columnNumber, Object data, String link, CellStyle style) {
@@ -527,5 +518,7 @@ public class Console extends SpecUtils {
         }
 
     }
+
+
 
 }
