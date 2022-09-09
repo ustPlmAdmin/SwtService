@@ -4,10 +4,8 @@ import com.dassault_systemes.platform.ven.apache.commons.net.util.Base64;
 import com.matrixone.apps.common.InboxTask;
 import com.matrixone.apps.common.Route;
 import com.matrixone.apps.domain.DomainObject;
-import com.matrixone.apps.domain.util.FrameworkException;
 import matrix.db.Context;
 import matrix.db.JPO;
-import matrix.util.MatrixException;
 import matrix.util.StringList;
 
 import javax.servlet.http.*;
@@ -60,7 +58,8 @@ public class Orders extends SkyService {
     @POST
     @Path("/task/create")
     public Response createTask(@javax.ws.rs.core.Context HttpServletRequest request) throws Exception {
-        Context ctx = auth(request, "m.kim");
+
+        Context ctx = authenticate(request);
 
         try {
 
@@ -177,7 +176,6 @@ public class Orders extends SkyService {
 
             Map<String, String> result = new LinkedHashMap<>();
             result.put("task_name", task.getName());
-
             routeCreate(ctx);
 
             return response(result);

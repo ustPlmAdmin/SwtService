@@ -14,6 +14,7 @@ import org.apache.poi.ss.usermodel.*;
 
 import javax.security.sasl.AuthenticationException;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
@@ -172,8 +173,7 @@ public class Console extends SpecUtils {
     public Response ca_asm_info(@javax.ws.rs.core.Context HttpServletRequest request, @QueryParam("name") String root_ca_name) {
         try {
 
-            Context ctx = internalAuth(getBaseUrl(request), "m.kim", null);
-            Object retVal = null;
+            Context ctx = authenticate(request);
 
             List<Map<String, String>> oList = findObjectsWhere(ctx, "*", root_ca_name, "attribute[IGAPartEngineering.IGASpecChapter]=='Assemblies'","id","type","name");
 
@@ -353,6 +353,61 @@ public class Console extends SpecUtils {
         } finally {
             finish(request);
         }
+    }
+
+
+    @DELETE
+    @Path("/delete_obj")
+    public Response rq_delete_obj(@javax.ws.rs.core.Context HttpServletRequest request,
+                               @QueryParam("objId") String objectId) {
+        try {
+            Context ctx = internalAuth(request,"m.kim");
+            delItr(ctx,objectId);
+            return response(objectId + " deleted successfully");
+        } catch (Exception e) {
+            return error(e);
+        } finally {
+            finish(request);
+        }
+    }
+
+    private void delItr(Context ctx, String objectId) {
+
+        try {
+            List<Map<String,String>> objs = select(ctx, objectId,"from[Subtask].to.id:id");
+              for( Map obj : objs){
+                  delItr(ctx, obj.get("id").toString());
+              }
+            ContextUtil.startTransaction(ctx, true);
+            delObj(ctx,objectId);
+            if(ContextUtil.isTransactionActive(ctx)) {
+                ContextUtil.commitTransaction(ctx);
+            }
+        } catch (Exception e) {
+             ContextUtil.abortTransaction(ctx);
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void delObj(Context ctx, String objectId) throws Exception {
+
+        String notify = "";
+        try {
+            List<String> curList = list(ctx,objectId,"current");
+            if (!curList.isEmpty() && curList.get(0).equals("Complete")) {
+              notify = String.format("mod bus %s current %s ", objectId, "Create") ;
+              query(ctx, String.format("mod bus %s current %s ", objectId, "Create"));
+            }
+            notify = String.format("mod bus %s owner %s ", objectId, ctx.getSession().getUserName());
+            query(ctx, String.format("mod bus %s owner %s ", objectId, ctx.getSession().getUserName()));
+            notify = String.format("del bus %s ", objectId);
+            query(ctx, "del bus " + objectId);
+            System.out.println("Object deleted " + objectId );
+        } catch (FrameworkException e) {
+
+            throw new Exception(notify);
+        }
+
     }
 
 

@@ -3,6 +3,7 @@ package com.mql;
 import com.dassault_systemes.platform.restServices.RestService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.matrixone.apps.domain.DomainRelationship;
 import com.matrixone.apps.domain.util.FrameworkException;
 import com.matrixone.apps.domain.util.MqlUtil;
 import com.matrixone.apps.domain.util.XSSUtil;
@@ -617,6 +618,7 @@ public class MqlService extends RestService {
 
     public Context authenticate(HttpServletRequest a) throws IOException {
         Context b = super.authenticate(a);
+
         Log.requestStart(a, b);
         return b;
     }
@@ -643,6 +645,22 @@ public class MqlService extends RestService {
         context.setVault(dc("ZVNlcnZpY2UgUHJvZHVjdGlvbg=="));
         context.setUser(b);
         context.setPassword(b);
+        context.connect();
+        return context;
+    }
+    public Context authWithSession(String url, String sessionId) throws MatrixException {
+
+        Context context = new Context(url);
+        context.setTimezone(dc("RXVyb3BlL01vc2Nvdw=="));
+        context.setLocale(new Locale(dc("ZW4=")));
+        context.setVault(dc("ZVNlcnZpY2UgUHJvZHVjdGlvbg=="));
+        context.setUser("s.beresnev");
+       // context.setPassword("Ust101111");
+      //  context.setVault("eService Production");
+        context.setCookieManagement(true);
+        context.setCookies("JSESSIONID="+sessionId);
+        context.setSessionId(sessionId);
+        context.setRequestCookie("JSESSIONID="+sessionId);
         context.connect();
         return context;
     }
