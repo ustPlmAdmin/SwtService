@@ -356,7 +356,7 @@ public class Console extends SpecUtils {
     }
 
 
-    @DELETE
+    @GET
     @Path("/delete_obj")
     public Response rq_delete_obj(@javax.ws.rs.core.Context HttpServletRequest request,
                                @QueryParam("objId") String objectId) {
