@@ -14,7 +14,6 @@ import org.apache.poi.ss.usermodel.*;
 
 import javax.security.sasl.AuthenticationException;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
@@ -361,7 +360,7 @@ public class Console extends SpecUtils {
     public Response rq_delete_obj(@javax.ws.rs.core.Context HttpServletRequest request,
                                @QueryParam("objId") String objectId) {
         try {
-            Context ctx = internalAuth(request,"m.kim");
+            Context ctx = authenticate(request);
             delItr(ctx,objectId);
             return response(objectId + " deleted successfully");
         } catch (Exception e) {

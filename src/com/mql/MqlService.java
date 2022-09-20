@@ -648,15 +648,14 @@ public class MqlService extends RestService {
         context.connect();
         return context;
     }
-    public Context authWithSession(String url, String sessionId) throws MatrixException {
+    public Context authWithSession(String url, String sessionId, String user, String role) throws MatrixException {
 
         Context context = new Context(url);
         context.setTimezone(dc("RXVyb3BlL01vc2Nvdw=="));
         context.setLocale(new Locale(dc("ZW4=")));
         context.setVault(dc("ZVNlcnZpY2UgUHJvZHVjdGlvbg=="));
-        context.setUser("s.beresnev");
-       // context.setPassword("Ust101111");
-      //  context.setVault("eService Production");
+        context.setUser( user == null ? user : "m.kim");
+        context.setRole( role == null ? dc("Y3R4OjpWUExNQWRtaW4uU2t5V2F5LkRlZmF1bHQ=") : role);
         context.setCookieManagement(true);
         context.setCookies("JSESSIONID="+sessionId);
         context.setSessionId(sessionId);
