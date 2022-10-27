@@ -83,6 +83,8 @@ public class Norm extends SkyService {
         List<Map<String, String>> headers = findRows(ctx, "*", name,
                 "from[DELLmiHeaderOperationInstance].to.name:name",
                 "from[DELLmiHeaderOperationInstance].physicalid:id");
+        Map<String, Object> temp = new HashMap<>();
+        Map<String, String> roommate = new HashMap<>();
         if (headers.size() > 0) {
             for (Map<String, String> header : headers) {
                 String childName = header.get("name");
@@ -112,6 +114,7 @@ public class Norm extends SkyService {
                     }
 
                     if (mbomObj.size() != 0) {
+                        temp = mbomObj;
                         mbomObj.put("quantity", 1);
                         String objName = (String) mbomObj.get("name");
 
@@ -138,7 +141,8 @@ public class Norm extends SkyService {
 
 
                         if (mbomObj.get("type").equals("Kit_MfgRawMaterial")) {
-                            mbomObj.put("roommate", findAttributes(ctx, barName));
+                            roommate = findAttributes(ctx, barName);
+                            mbomObj.put("roommate", roommate);
                         }
                     }
                 }
@@ -151,8 +155,17 @@ public class Norm extends SkyService {
                         if (resName.startsWith("rim") || resName.startsWith("rwk") || resName.startsWith("ncm") || resName.startsWith("assy") || resName.startsWith("prd"))
                             resources.add(findAttributes(ctx, resName));
                     }
-                    if (resources.size() > 0)
+                    if (resources.size() > 0 && temp.size() > 0) {
+                        if (temp.get("type").equals("Kit_MfgRawMaterial") && temp.get("type") != null && roommate.size() > 0) {
+                            for (Map<String, String> res : resources) {
+                                if (roommate.get("attribute[Kit_MfgBar.Kit_NumberOfParts]") != null)
+                                res.put("attribute[Kit_MfgBar.Kit_NumberOfParts]", String.valueOf(roommate.get("attribute[Kit_MfgBar.Kit_NumberOfParts]")));
+                                if (roommate.get("attribute[Kit_MfgBar.Kit_MaxGroupStockLength]") != null)
+                                res.put("attribute[Kit_MfgBar.Kit_MaxGroupStockLength]", String.valueOf(roommate.get("attribute[Kit_MfgBar.Kit_MaxGroupStockLength]")));
+                            }
+                        }
                         child.put("resources", resources);
+                    }
                 }
                 child.put("actions", gsys(request, ctx, childName, barName));
                 result.add(child);
@@ -201,12 +214,12 @@ public class Norm extends SkyService {
             }
 
             if (task_name != null) {
-                String taskNotes = findScalar(ctx, "*", task_name, "attribute[Notes]");
-                List<Map<String, String>> contents = findRows(ctx, "*", task_name,
+                String taskNotes = findScalar(ctx, "Task", task_name, "attribute[Notes]");
+                List<Map<String, String>> contents = findRows(ctx, "Task", task_name,
                         "from[Object Route].to.to[Route Task].from.from[Task Sub Route].to.to[Object Route].from.attribute[PLMEntity.V_Name]:title",
                         "from[Object Route].to.to[Route Task].from.from[Task Sub Route].to.to[Object Route].from.type:type",
                         "from[Object Route].to.to[Route Task].from.from[Task Sub Route].to.to[Object Route].from.name:name");
-                List<Map<String, String>> add = findRows(ctx, "*", task_name,
+                List<Map<String, String>> add = findRows(ctx, "Task", task_name,
                         "from[Object Route].to.to[Object Route].from.attribute[PLMEntity.V_Name]:title",
                         "from[Object Route].to.to[Object Route].from.type:type",
                         "from[Object Route].to.to[Object Route].from.name:name");

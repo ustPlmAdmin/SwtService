@@ -5,10 +5,10 @@ import com.matrixone.apps.common.InboxTask;
 import com.matrixone.apps.common.Route;
 import com.matrixone.apps.domain.DomainObject;
 import com.matrixone.apps.domain.util.ContextUtil;
-
+import com.matrixone.apps.domain.util.FrameworkException;
 import matrix.db.Context;
 import matrix.db.JPO;
-import matrix.db.JPOSupport;
+import matrix.util.MatrixException;
 import matrix.util.StringList;
 
 import javax.servlet.http.*;
@@ -26,7 +26,7 @@ import org.apache.xmlbeans.impl.piccolo.util.DuplicateKeyException;
 /**
  * Класс по созданию заказа с 1С
  * */
-//@Path("")
+
 public class Orders extends SkyService {
 
     public Context auth(HttpServletRequest request, String username) throws Exception {
@@ -63,10 +63,7 @@ public class Orders extends SkyService {
     @POST
     @Path("/task/create")
     public Response createTask(@javax.ws.rs.core.Context HttpServletRequest request) throws Exception {
-
-        Context ctx = authenticate(request);
-        //Context ctx = authWithSession("https://3dspace-m001.sw-tech.by:444/3dspace/", request.getCookies()[0].getValue(), "m.kim", "ctx::VPLMCreator.SkyWay.Common Space");
-        JPOSupport.registerThread(ctx);
+        Context ctx = auth(request, "m.kim");
 
         try {
 
@@ -148,6 +145,7 @@ public class Orders extends SkyService {
             relatedInfoMap.put("Calendar", "");
             relatedInfoMap.put("deliverableId", null);
 
+
             ContextUtil.startTransaction(ctx, true);
 
             Task task = new Task();
@@ -195,7 +193,6 @@ public class Orders extends SkyService {
             return error(e);
         } finally {
             ContextUtil.commitTransaction(ctx);
-            JPOSupport.unregisterThread();
             finish(request);
         }
     }
@@ -237,16 +234,14 @@ public class Orders extends SkyService {
 
     @GET
     @Path("/create_routes")
-    public Response routeRq(@javax.ws.rs.core.Context HttpServletRequest request, @QueryParam("task_id")  String task_id) {
+    public Response routeRq(@javax.ws.rs.core.Context HttpServletRequest request, @QueryParam("task_name") String task_name) {
         try {
             Context ctx = authenticate(request);
-           // Context ctx = authWithSession("https://3dspace-m001.sw-tech.by:444/3dspace/", request.getCookies()[0].getValue(), "m.kim", "ctx::VPLMCreator.SkyWay.Common Space");
-            JPOSupport.registerThread(ctx);
+            String task_id = findScalar(ctx, "Task", task_name, "id");
             return routeCreate(ctx, task_id);
         } catch (Exception e) {
             return error(e);
         } finally {
-            JPOSupport.unregisterThread();
             finish(request);
         }
     }
@@ -263,10 +258,10 @@ public class Orders extends SkyService {
                 String[] args;
                 switch (product_type) {
                     case "assembly":
-                        args = new String[]{task_id, null, "56A6EB96000086B06081698B0000005E"};
+                        args = new String[]{task_id, null, "56A6BCDF001F52CC6033496200014D5A"};
                         break;
                     case "detail":
-                        args = new String[]{task_id, null, "56A6EB9600003FA46022334700000334"};
+                        args = new String[]{task_id, null, "56A6BCDF004375C062E3A1A200002FA7"};
                         break;
                     default:
                         throw new NullPointerException();
@@ -285,6 +280,7 @@ public class Orders extends SkyService {
                 route.setOwner(ctx, owner);
                 List<String> connectionId = findObjectsListWhere(ctx, "*", it.getName(), "", "relationship[Project Task].physicalid");
                 query(ctx, "mod connection \"" + connectionId.get(0) + "\" to Person " + person + " - from " + it.getId(ctx));
+                ContextUtil.commitTransaction(ctx);
 
             }
             return response(route.getName());

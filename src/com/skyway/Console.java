@@ -26,13 +26,14 @@ import static org.apache.poi.ss.usermodel.CellStyle.*;
 /**
  * Бекэнд виджета SWT Console
  * */
+@Path("")
 public class Console extends SpecUtils {
 
     public Context authenticate(HttpServletRequest request) throws IOException {
         Context context = super.authenticate(request);
         String username = context.getSession().getUserName();
         if (username.equals("m.kim") || username.equals("s.beresnev") || username.equals("a.pagoda") || username.equals("a.pavlovich"))
-        return context;
+            return context;
         throw new AuthenticationException();
     }
 
@@ -49,8 +50,9 @@ public class Console extends SpecUtils {
         } else {
             Map<String, Object> materials = new LinkedHashMap<>();
             List<String> items = list(ctx, objectId, "from[Classified Item].to.id");
-            for (String id : items)
+            for (String id : items){
                 materials.put(id, tree(ctx, id, "attribute[*]"));
+            }
             return materials;
         }
     }
@@ -81,7 +83,7 @@ public class Console extends SpecUtils {
             List<Map<String, String>> mes = findObjects(ctx, "General Library", "*", attrs);
             for(Map<String, String> m: mes){
                 if (m.get("current").equals("Active"))
-                names.add(m.get("name"));
+                    names.add(m.get("name"));
             }
             return response(names);
         } catch (Exception e) {
@@ -128,7 +130,7 @@ public class Console extends SpecUtils {
                 result.put(tnr, getValue(second));
             }
         } catch (Exception e) {
-           error(e);
+            error(e);
         }
         return result;
     }
@@ -149,8 +151,8 @@ public class Console extends SpecUtils {
                         scalar(ctx, physicalId, "owner");
                     } catch (FrameworkException e) { // phisicalid dosent exist
                         /*try {*/
-                            query(ctx, "disconnect bus " + tnr + " from " + id);
-                            deleted += 1;
+                        query(ctx, "disconnect bus " + tnr + " from " + id);
+                        deleted += 1;
                         /*} catch (Exception ss){
                             ss.printStackTrace();
                         }*/
@@ -424,7 +426,7 @@ public class Console extends SpecUtils {
                 "attribute[PLMEntity.V_description]:desc");
 
         if (mode.equals("prepare") && !object.get("desc").contains("@")
-            || mode.equals("restore") && object.get("desc").contains("@")) {
+                || mode.equals("restore") && object.get("desc").contains("@")) {
 
             boolean isBlockedByChangeControl = list(ctx, objectId, "interface").contains("Change Control");
 
@@ -573,6 +575,42 @@ public class Console extends SpecUtils {
 
     }
 
+    @GET
+    @Path("/library")
+    public Response fillCatalog(@javax.ws.rs.core.Context HttpServletRequest request,
+                                @QueryParam("name") String name, @QueryParam("unit") String unit) {
+        try {
+            Context ctx = authenticate(request);
+            String objectId = findScalar(ctx, "General Library", name, "id");
+            Map<String, Object> catalog = rec1(ctx, objectId, unit);
+            return response(catalog);
+        } catch (Exception e) {
+            return error(e);
+        } finally {
+            finish(request);
+        }
+    }
 
+    Map<String, Object> rec1(Context ctx, String objectId, String unit) throws FrameworkException {
+        List<Map<String, String>> children = select(ctx, objectId, "from[Subclass].to.id", "from[Subclass].to.name");
+        if (children.size() > 0) {
+            Map<String, Object> childMap = new LinkedHashMap<>();
+            for (Map<String, String> child : children) {
+                String childId = child.get("from[Subclass].to.id");
+                String childName = child.get("from[Subclass].to.name");
+                childMap.put(childName, rec1(ctx, childId, unit));
+            }
+            return childMap;
+        } else {
+            Map<String, Object> materials = new LinkedHashMap<>();
+            List<String> items = list(ctx, objectId, "from[Classified Item].to.id");
+            for (String id : items){
+                String type = row(ctx, id, "type").get("type");
+                if (type.equals("Kit_OEMProduct") || type.equals("Kit_StandardProduct") || type.equals("CATComponentsFamilyExplicit"))
+                    query(ctx, "mod bus \"" + id + "\" Measure " + unit);
+            }
+            return materials;
+        }
+    }
 
 }
