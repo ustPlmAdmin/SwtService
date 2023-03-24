@@ -16,6 +16,7 @@ import java.util.*;
 public class ApproverCat extends SkyService {
 
     void filterRoutesWithUserTasks(Context ctx, String username, List<Map<String, String>> routes) throws FrameworkException {
+        getCa(ctx, routes);
         Iterator<Map<String, String>> iter = routes.iterator();
         while (iter.hasNext()) {
             List<Map<String, String>> tasks = select(ctx, iter.next().get("id"),
@@ -32,6 +33,7 @@ public class ApproverCat extends SkyService {
     }
 
     void filterRoutesWithUserGroupTasks(Context ctx, String username, List<Map<String, String>> routes) throws FrameworkException {
+        getCa(ctx, routes);
         Iterator<Map<String, String>> iter = routes.iterator();
         while (iter.hasNext()) {
             List<Map<String, String>> tasks = select(ctx, iter.next().get("id"),
@@ -45,6 +47,31 @@ public class ApproverCat extends SkyService {
                         exist = true;
             if (!exist)
                 iter.remove();
+        }
+    }
+
+    void filterCompletedRoutes(Context ctx, List<Map<String, String>> routes) throws FrameworkException {
+        getCa(ctx, routes);
+    }
+
+    private void getCa(Context ctx, List<Map<String, String>> routes) throws FrameworkException {
+        for (Map<String, String> route: routes) {
+            List<String> ca_name = findList(ctx, "Route", route.get("route_name"), "to[Object Route].from.name:ca_name");
+            if (ca_name.size() > 0) {
+                for (String ca : ca_name) {
+                    if (ca != null && ca.startsWith("ca")) {
+                        route.put("ca_name", ca);
+                        route.put("ca_owner", findScalar(ctx, "*", ca, "owner"));
+                        break;
+                    } else {
+                        route.put("ca_name", "");
+                        route.put("ca_owner", findScalar(ctx, "*", route.get("route_name"), "owner"));
+                    }
+                }
+            } else {
+                route.put("ca_name", "");
+                route.put("ca_owner", findScalar(ctx, "*", route.get("route_name"), "owner"));
+            }
         }
     }
 
@@ -105,14 +132,11 @@ public class ApproverCat extends SkyService {
         try {
             Context ctx = authenticate(request);
             String username = ctx.getSession().getUserName();
-
             Calendar prevMonth = Calendar.getInstance();
             prevMonth.add(Calendar.MONTH, -1);
             String[] attrs = {
                     "name:route_name",
-                    "id",
-                    "to[Object Route].from:ca_name",
-                    "to[Object Route].from.owner:ca_owner",
+                    "id"
             };
             // due date
             List<Map<String, String>> routesWithMyActiveTasks = findObjectsWhere(ctx, "Route", "*",
@@ -136,6 +160,7 @@ public class ApproverCat extends SkyService {
                             " && from[Route Node].to.name == \"" + username + "\" " +
                             " && modified >= \"" + dateFormat.format(prevMonth.getTime()) + "\" ",
                     attrs);
+            filterCompletedRoutes(ctx, routesFinishedWithMyTasks);
 
             Map<String, List<Map<String, String>>> result = new LinkedHashMap<>();
             result.put("routesWithMyActiveTasks", routesWithMyActiveTasks);

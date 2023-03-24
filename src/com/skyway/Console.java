@@ -578,11 +578,11 @@ public class Console extends SpecUtils {
     @GET
     @Path("/library")
     public Response fillCatalog(@javax.ws.rs.core.Context HttpServletRequest request,
-                                @QueryParam("name") String name, @QueryParam("unit") String unit) {
+                                @QueryParam("name") String name) {
         try {
             Context ctx = authenticate(request);
             String objectId = findScalar(ctx, "General Library", name, "id");
-            Map<String, Object> catalog = rec1(ctx, objectId, unit);
+            Map<String, Object> catalog = rec1(ctx, objectId);
             return response(catalog);
         } catch (Exception e) {
             return error(e);
@@ -591,23 +591,58 @@ public class Console extends SpecUtils {
         }
     }
 
-    Map<String, Object> rec1(Context ctx, String objectId, String unit) throws FrameworkException {
+    Map<String, Object> rec1(Context ctx, String objectId) throws FrameworkException {
         List<Map<String, String>> children = select(ctx, objectId, "from[Subclass].to.id", "from[Subclass].to.name");
         if (children.size() > 0) {
             Map<String, Object> childMap = new LinkedHashMap<>();
             for (Map<String, String> child : children) {
                 String childId = child.get("from[Subclass].to.id");
                 String childName = child.get("from[Subclass].to.name");
-                childMap.put(childName, rec1(ctx, childId, unit));
+                childMap.put(childName, rec1(ctx, childId));
             }
             return childMap;
         } else {
             Map<String, Object> materials = new LinkedHashMap<>();
             List<String> items = list(ctx, objectId, "from[Classified Item].to.id");
             for (String id : items){
-                String type = row(ctx, id, "type").get("type");
-                if (type.equals("Kit_OEMProduct") || type.equals("Kit_StandardProduct") || type.equals("CATComponentsFamilyExplicit"))
-                    query(ctx, "mod bus \"" + id + "\" Measure " + unit);
+                String unit = row(ctx, id, "attribute[XP_VPMReference_Ext.Unit]").get("attribute[XP_VPMReference_Ext.Unit]");
+                String code = "";
+                switch (unit) {
+                    case "piece":
+                        code = "796";
+                        break;
+                    case "mm":
+                        code = "003";
+                        break;
+                    case "m2":
+                        code = "055";
+                        break;
+                    case "m3":
+                        code = "113";
+                        break;
+                    case "g":
+                        code = "163";
+                        break;
+                    case "mg":
+                        code = "161";
+                        break;
+                    case "l":
+                        code = "112";
+                        break;
+                    case "kg":
+                        code = "166";
+                        break;
+                    case "m":
+                        code = "006";
+                        break;
+                    case "ml":
+                        code = "111";
+                        break;
+                    default:
+                        break;
+                }
+                if (!code.equals(""))
+                query(ctx, "mod bus \"" + id + "\" XP_VPMReference_Ext.UnitCode " + code);
             }
             return materials;
         }

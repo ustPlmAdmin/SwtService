@@ -62,6 +62,8 @@ public class Norm extends SkyService {
         pathPIDs.removeIf(excludePathIds::contains);
         return pathPIDs;
     }
+        Map<String, String> roommate = new HashMap<>();
+        String addParts = "ADD PARTS";
 
     List<Map<String, Object>> gsys(HttpServletRequest request, Context ctx, String name, String barName) throws Exception {
         List<Map<String, Object>> result = new ArrayList<>();
@@ -84,7 +86,6 @@ public class Norm extends SkyService {
                 "from[DELLmiHeaderOperationInstance].to.name:name",
                 "from[DELLmiHeaderOperationInstance].physicalid:id");
         Map<String, Object> temp = new HashMap<>();
-        Map<String, String> roommate = new HashMap<>();
         if (headers.size() > 0) {
             for (Map<String, String> header : headers) {
                 String childName = header.get("name");
@@ -142,7 +143,11 @@ public class Norm extends SkyService {
 
                         if (mbomObj.get("type").equals("Kit_MfgRawMaterial")) {
                             roommate = findAttributes(ctx, barName);
+//                            addParts = roommate.get("attribute[Kit_MfgBar.Kit_NumberOfAddParts]");
                             mbomObj.put("roommate", roommate);
+                        }
+                        if (barName != null) {
+                            addParts = findAttributes(ctx, barName).get("attribute[Kit_MfgBar.Kit_NumberOfAddParts]");
                         }
                     }
                 }
@@ -158,14 +163,21 @@ public class Norm extends SkyService {
                     if (resources.size() > 0 && temp.size() > 0) {
                         if (temp.get("type").equals("Kit_MfgRawMaterial") && temp.get("type") != null && roommate.size() > 0) {
                             for (Map<String, String> res : resources) {
-                                if (roommate.get("attribute[Kit_MfgBar.Kit_NumberOfParts]") != null)
-                                res.put("attribute[Kit_MfgBar.Kit_NumberOfParts]", String.valueOf(roommate.get("attribute[Kit_MfgBar.Kit_NumberOfParts]")));
-                                if (roommate.get("attribute[Kit_MfgBar.Kit_MaxGroupStockLength]") != null)
-                                res.put("attribute[Kit_MfgBar.Kit_MaxGroupStockLength]", String.valueOf(roommate.get("attribute[Kit_MfgBar.Kit_MaxGroupStockLength]")));
+                                Map<String, String> attributes = findAttributes(ctx, roommate.get("name"));
+                                for (String attr: attributes.keySet()) {
+                                    if (attr.startsWith("attribute[Kit_MfgBar")){
+                                        res.put(attr, String.valueOf(roommate.get(attr)));
+                                    }
+                                }
                             }
                         }
-                        child.put("resources", resources);
                     }
+                    if (barName != null) {
+                        for (Map<String, String> resource : resources) {
+                            resource.put("attribute[Kit_MfgBar.Kit_NumberOfAddParts]", addParts);
+                        }
+                    }
+                        child.put("resources", resources);
                 }
                 child.put("actions", gsys(request, ctx, childName, barName));
                 result.add(child);

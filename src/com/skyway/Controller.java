@@ -26,6 +26,7 @@ public class Controller extends ModelerBase {
                 ApproverPdo.class,
                 ApproverCat.class,
                 ApproverBoss.class,
+                ApproverNorm.class,
         };
     }
 }
