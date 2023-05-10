@@ -7,7 +7,6 @@ import com.dassault_systemes.enovia.e6wv2.foundation.jaxb.Dataobject;
 import com.matrixone.apps.domain.util.ContextUtil;
 import com.mql.Log;
 import matrix.db.Context;
-import matrix.db.JPOSupport;
 import matrix.db.MQLCommand;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -29,7 +28,6 @@ import java.util.zip.GZIPOutputStream;
 /**
  * Общие утилиты
  * */
-//@Path("")
 public class Utils extends SkyService {
     public static final long startTime = new Date().getTime();
 
@@ -219,13 +217,47 @@ public class Utils extends SkyService {
         return Response.ok(var8).build();
     }
 
+
+    @GET
+    @Path("/fix_encoding")
+    public Response chFrontEncoding (@javax.ws.rs.core.Context HttpServletRequest request, @QueryParam("prj_id")  String prj_id) {
+
+        String caData = new String();
+        try {
+          //  Context ctx = authWithSession("https://3dspace-m001.sw-tech.by:444/3dspace/", request.getCookies()[0].getValue(), "m.kim", "ctx::VPLMCreator.SkyWay.Common Space");
+            Context ctx = authenticate(request);
+            StringBuffer finalData = new StringBuffer();
+            caData = MqlUtil.mqlCommand(ctx, "list page $1 select content","emxFrameworkStringResource_en_Custom.properties");
+            caData = caData.substring(caData.indexOf("emxFramework."));
+            for(String line : caData.split("((?=emxFramework\\.))")){
+                for (String hex : line.split("\\\\u")) {
+                    if (hex.substring(0, 4).matches("^[0-9a-fA-F]{4}$")) {
+                        char out_ = (char) Integer.parseInt(hex.substring(0, 4), 16);
+                        StringBuffer sb = new StringBuffer();
+                        sb.append(out_);
+                        line = line.replace("\\u" + hex.substring(0, 4), sb);
+                    }
+                }
+                line = line.replace("\n","");
+                line = new String(line.getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
+                finalData.append(line + "\n");
+            }
+            caData = "#Parameterization NLS information \n" + finalData.toString();
+            MqlUtil.mqlCommand(ctx, "mod page $1 content $2","emxFrameworkStringResource_en_Custom.properties",caData);
+
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+        return Response.ok(caData).build();
+
+    }
+
     @GET
     @Path("/recal_projectsequence")
     public Response reseqPrj(@javax.ws.rs.core.Context HttpServletRequest request, @QueryParam("prj_id")  String prj_id){
 
         try {
             Context ctx = authenticate(request);
-            //Context ctx = authWithSession("https://3dspace-m001.sw-tech.by:444/3dspace/", request.getCookies()[0].getValue(), "m.kim", "ctx::VPLMCreator.SkyWay.Common Space");
             String prj_pal_id = scalar(ctx,prj_id,"to[Project Access List].from.id");
             if( prj_pal_id != null) {
                 String var5 = MqlUtil.mqlCommand(ctx, true, "print bus $1 select $2 dump", true, new String[]{prj_pal_id, "attribute[ProjectSequence]"});

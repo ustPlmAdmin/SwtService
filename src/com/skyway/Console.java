@@ -26,7 +26,6 @@ import static org.apache.poi.ss.usermodel.CellStyle.*;
 /**
  * Бекэнд виджета SWT Console
  * */
-@Path("")
 public class Console extends SpecUtils {
 
     public Context authenticate(HttpServletRequest request) throws IOException {
