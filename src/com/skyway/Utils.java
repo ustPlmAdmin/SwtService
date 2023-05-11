@@ -203,7 +203,7 @@ public class Utils extends SkyService {
                         char out_ = (char) Integer.parseInt(hex.substring(0, 4), 16);
                         StringBuffer sb = new StringBuffer();
                         sb.append(out_);
-                        line = line.replace("\\u" + hex.substring(0, 4), new String() out_);
+                        line = line.replace("\\u" + hex.substring(0, 4), sb);
                     }
                 }
                 line = line.replace("\n","");
