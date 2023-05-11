@@ -182,49 +182,17 @@ public class Utils extends SkyService {
         }
     }
 
-    /**
-     * Блок для пересчета (удаление) несуществующих тасков в списке атрибута ProjectSequence
+
+    /*
+     * Исправляет кодировку в emxFrameworkStringResource_en_Custom.properties
      */
-
-    @GET
-    @Path("/unzip")
-    public Response unzip(@javax.ws.rs.core.Context HttpServletRequest request, String zip) {
-
-        String var7 = "";
-        try {
-            var7 = unzip(zip);
-        } catch (IOException var9) {
-            var9.printStackTrace();
-        }
-        return Response.ok(var7).build();
-    }
-
-
-    @GET
-    @Path("/zip")
-    public Response zip(@javax.ws.rs.core.Context HttpServletRequest request, String json) {
-
-        Dataobject var6 = ServiceJson.readDataobjectfromJson(json);
-        String var8 = ServiceJson.generateJsonStringfromJAXB(var6);
-
-        if (var8 != null && !var8.isEmpty()) {
-            try {
-                var8 = zip(var8);
-            } catch (IOException var14) {
-                var14.printStackTrace();
-            }
-        }
-        return Response.ok(var8).build();
-    }
-
-
     @GET
     @Path("/fix_encoding")
     public Response chFrontEncoding (@javax.ws.rs.core.Context HttpServletRequest request, @QueryParam("prj_id")  String prj_id) {
 
         String caData = new String();
         try {
-          //  Context ctx = authWithSession("https://3dspace-m001.sw-tech.by:444/3dspace/", request.getCookies()[0].getValue(), "m.kim", "ctx::VPLMCreator.SkyWay.Common Space");
+            //  Context ctx = authWithSession("https://3dspace-m001.sw-tech.by:444/3dspace/", request.getCookies()[0].getValue(), "m.kim", "ctx::VPLMCreator.SkyWay.Common Space");
             Context ctx = authenticate(request);
             StringBuffer finalData = new StringBuffer();
             caData = MqlUtil.mqlCommand(ctx, "list page $1 select content","emxFrameworkStringResource_en_Custom.properties");
@@ -235,7 +203,7 @@ public class Utils extends SkyService {
                         char out_ = (char) Integer.parseInt(hex.substring(0, 4), 16);
                         StringBuffer sb = new StringBuffer();
                         sb.append(out_);
-                        line = line.replace("\\u" + hex.substring(0, 4), sb);
+                        line = line.replace("\\u" + hex.substring(0, 4), new String() out_);
                     }
                 }
                 line = line.replace("\n","");
@@ -252,6 +220,10 @@ public class Utils extends SkyService {
 
     }
 
+
+    /**
+     * Блок для пересчета (удаление) несуществующих тасков в списке атрибута ProjectSequence
+     */
     @GET
     @Path("/recal_projectsequence")
     public Response reseqPrj(@javax.ws.rs.core.Context HttpServletRequest request, @QueryParam("prj_id")  String prj_id){
@@ -300,6 +272,38 @@ public class Utils extends SkyService {
             throw new RuntimeException(e);
         }
     }
+    /* в ручном режиме */
+    @GET
+    @Path("/unzip")
+    public Response unzip(@javax.ws.rs.core.Context HttpServletRequest request, String zip) {
+
+        String var7 = "";
+        try {
+            var7 = unzip(zip);
+        } catch (IOException var9) {
+            var9.printStackTrace();
+        }
+        return Response.ok(var7).build();
+    }
+
+
+    @GET
+    @Path("/zip")
+    public Response zip(@javax.ws.rs.core.Context HttpServletRequest request, String json) {
+
+        Dataobject var6 = ServiceJson.readDataobjectfromJson(json);
+        String var8 = ServiceJson.generateJsonStringfromJAXB(var6);
+
+        if (var8 != null && !var8.isEmpty()) {
+            try {
+                var8 = zip(var8);
+            } catch (IOException var14) {
+                var14.printStackTrace();
+            }
+        }
+        return Response.ok(var8).build();
+    }
+
 
 
     private void delBusbyId(Context ctx , List<Dataobject> dObjs,  List<String> phyIds){
