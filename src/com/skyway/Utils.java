@@ -22,6 +22,8 @@ import java.io.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -192,32 +194,35 @@ public class Utils extends SkyService {
 
         String caData = new String();
         try {
-            //  Context ctx = authWithSession("https://3dspace-m001.sw-tech.by:444/3dspace/", request.getCookies()[0].getValue(), "m.kim", "ctx::VPLMCreator.SkyWay.Common Space");
-            Context ctx = authenticate(request);
+             Context ctx = authWithSession("https://3dspace-m001.sw-tech.by:444/3dspace/", request.getCookies()[0].getValue(), "m.kim", "ctx::VPLMCreator.SkyWay.Common Space");
+           // Context ctx = authenticate(request);
+            Pattern pattern = Pattern.compile("\\\\u[0-9a-fA-F]{4}");
             StringBuffer finalData = new StringBuffer();
             caData = MqlUtil.mqlCommand(ctx, "list page $1 select content","emxFrameworkStringResource_en_Custom.properties");
-            caData = caData.substring(caData.indexOf("emxFramework."));
-            for(String line : caData.split("((?=emxFramework\\.))")){
-                for (String hex : line.split("\\\\u")) {
-                    if (hex.substring(0, 4).matches("^[0-9a-fA-F]{4}$")) {
-                        char out_ = (char) Integer.parseInt(hex.substring(0, 4), 16);
-                        StringBuffer sb = new StringBuffer();
-                        sb.append(out_);
-                        line = line.replace("\\u" + hex.substring(0, 4), sb);
+            Matcher matcher = pattern.matcher(caData);
+            if(matcher.find()) {
+                caData = caData.substring(caData.indexOf("emxFramework."));
+                for (String line : caData.split("((?=emxFramework\\.))")) {
+                    for (String hex : line.split("\\\\u")) {
+                        if (hex.substring(0, 4).matches("^[0-9a-fA-F]{4}$")) {
+                            char out_ = (char) Integer.parseInt(hex.substring(0, 4), 16);
+                            StringBuffer sb = new StringBuffer();
+                            sb.append(out_);
+                            line = line.replace("\\u" + hex.substring(0, 4), sb);
+                        }
                     }
+                    line = line.replace("\n", "");
+                    line = new String(line.getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
+                    finalData.append(line + "\n");
                 }
-                line = line.replace("\n","");
-                line = new String(line.getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
-                finalData.append(line + "\n");
+                caData = "#Parameterization NLS information \n" + finalData.toString();
+                MqlUtil.mqlCommand(ctx, "mod page $1 content $2","emxFrameworkStringResource_en_Custom.properties",caData);
+                return Response.ok("").build();
             }
-            caData = "#Parameterization NLS information \n" + finalData.toString();
-            MqlUtil.mqlCommand(ctx, "mod page $1 content $2","emxFrameworkStringResource_en_Custom.properties",caData);
-
         } catch (Exception ex) {
-            throw new RuntimeException(ex);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ex.getMessage()).build();
         }
-        return Response.ok(caData).build();
-
+        return  Response.ok("Нельзя перевести - неизвестная кодировка").build();
     }
 
 

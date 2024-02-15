@@ -5,8 +5,11 @@ import com.dassault_systemes.enovia.changeaction.interfaces.IChangeActionService
 import com.matrixone.apps.domain.DomainObject;
 import com.matrixone.apps.domain.util.ContextUtil;
 import com.matrixone.apps.domain.util.FrameworkException;
-import matrix.db.Context;
+import com.matrixone.apps.domain.util.MapList;
+import com.matrixone.apps.framework.ui.UIUtil;
+import matrix.db.*;
 
+import matrix.util.StringList;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFHyperlink;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -22,10 +25,12 @@ import java.io.IOException;
 import java.util.*;
 
 
+import static com.matrixone.apps.domain.DomainConstants.*;
 import static org.apache.poi.ss.usermodel.CellStyle.*;
 /**
  * Бекэнд виджета SWT Console
  * */
+//@Path("")
 public class Console extends SpecUtils {
 
     public Context authenticate(HttpServletRequest request) throws IOException {
@@ -355,7 +360,110 @@ public class Console extends SpecUtils {
         }
     }
 
+    /***Перевод VPMReference в Kit_Product или Kit_Part ***/
+    @GET
+    @Path("/migrate_vpref")
+    public Response migrate_vref(@javax.ws.rs.core.Context HttpServletRequest request,
+                                  @QueryParam("name") String name) {
+        try {
+            Context ctx = authenticate(request);
+           // Context ctx = authWithSession("https://3dspace-m001.sw-tech.by:444/3dspace/", request.getCookies()[0].getValue(), "m.kim", "ctx::VPLMCreator.SkyWay.Common Space");
+            StringList currentSelects = new StringList() {{
+                add("physicalid");
+                add(SELECT_TYPE);
+                add(SELECT_NAME);
+                add(SELECT_REVISION);
+                add("attribute[IGAPartEngineering.IGASpecChapter]");
+                add("attribute[PLMEntity.V_usage]");
+                add(SELECT_TYPE);
+                add("attribute[PLMEntity.V_Name]");
+            }};
 
+            MapList mapList =  DomainObject.findObjects(ctx,
+                    "VPMReference",   //type
+                    name,        // name
+                    null,        // revision
+                    QUERY_WILDCARD,  // owner
+                    QUERY_WILDCARD,  // vault
+                    null,
+                    null,        // query name
+                    false,       // expand type
+                    currentSelects,     // selects
+                    (short) 0       // object limit
+            );
+
+            Map<String,String> map = (Map) mapList.get(0);
+
+          //  Map<String,String> map = findObject(ctx,"VPMReference", name,"physicalid","attribute[PLMEntity.V_Name]","attribute[IGAPartEngineering.IGASpecChapter]","attribute[PLMEntity.V_usage]");
+
+            String sRefPID = (String) map.get("physicalid");
+            String specChapter = (String) map.get("attribute[IGAPartEngineering.IGASpecChapter]");
+            String v_usage = (String) map.get("attribute[PLMEntity.V_usage]");
+
+            String sNewType = "";
+            if ("3DPart".equals(v_usage) && "Parts".equals(specChapter))
+                sNewType = "Kit_Part";
+            if (UIUtil.isNullOrEmpty(v_usage) && "Assemblies".equals(specChapter))
+                sNewType = "Kit_Product";
+            if ("".equals(sNewType)) { throw new Exception("Object is not VPMReference type or attributes IGASpecChapter and V_usage are empty");}
+
+            MapList mlRevs = new MapList();
+            mlRevs.add(map);
+            DomainObject domObj = DomainObject.newInstance(ctx, sRefPID);
+            mlRevs.addAll(domObj.getRevisionsInfo(ctx, currentSelects, new StringList()));
+            for (Object o : mlRevs) {
+                Map m = (Map) o;
+                String sPID = (String) m.get("physicalid");
+                String sType = (String) m.get(SELECT_TYPE);
+                MQLCommand.exec(ctx, String.format("mod bus %s type '%s'", sPID, sNewType));
+                updateSemanticRelations(ctx, sPID, sType, sNewType, false);
+            }
+           return response(sRefPID + " migarte successfully");
+        } catch (Exception e) {
+            return error(e);
+        } finally {
+            finish(request);
+        }
+    }
+
+    private void updateSemanticRelations(Context context, String pid, String oldType, String newType, boolean debug) throws Exception {
+        StringList pathSelects = new StringList();
+        pathSelects.add("id");
+        pathSelects.add("element.type");
+        pathSelects.add("element.physicalid");
+        PathQuery pQuery = new PathQuery();
+        pQuery.setPathType("SemanticRelation");
+        pQuery.setVaultPattern("vplm");
+        PathQuery.QueryKind qKind = PathQuery.CONTAINS;
+        ArrayList alCriteria = new ArrayList();
+        alCriteria.add(pid);
+        pQuery.setCriterion(qKind, alCriteria);
+        short sPageSize = 10;
+        PathQueryIterator pqItr = pQuery.getIterator(context, pathSelects, sPageSize, new StringList());
+
+        ArrayList<String> alCmds = new ArrayList<>();
+        while (pqItr.hasNext()) {
+            PathWithSelect pathInfo = pqItr.next();
+            String sPathId = pathInfo.getSelectData("id");
+            StringList slTypes = pathInfo.getSelectDataList("element.type");
+            StringList slPIDs = pathInfo.getSelectDataList("element.physicalid");
+
+            for (int i = 0; i < slTypes.size(); i++) {
+                String sType = slTypes.get(i);
+                String sPid = slPIDs.get(i);
+                if (sType.equals(oldType) && pid.equals(sPid)) {
+                    alCmds.add(String.format("modify path %s element %s type '%s'", sPathId, Integer.toString(i), newType));
+                }
+            }
+        }
+        pqItr.close();
+        //because pqItr must be closed at first then you can mod objects otherwise #1400004: Object is not open for update
+        if (!debug)
+            for (String cmd : alCmds)
+                MQLCommand.exec(context, cmd);
+    }
+
+    /***Удаление проекта по его id. Обратить внимание на права***/
     @GET
     @Path("/delete_obj")
     public Response rq_delete_obj(@javax.ws.rs.core.Context HttpServletRequest request,
