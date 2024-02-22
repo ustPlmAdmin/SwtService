@@ -95,13 +95,13 @@ public class ApproverCat extends SkyService {
                         Calendar finish = Calendar.getInstance();
                         finish.setTime(dateFormat.parse(task.get("task_finish")));
                         if (finish.before(now))
-                            task.put("color", "#ffc000");
+                            task.put("color", "#ffd9d9");
                         else{
                             finish.add(Calendar.DAY_OF_YEAR, -1);
                             if (finish.before(now)) {
-                                task.put("color", "#ffc000");
+                                task.put("color", "#ffd9d9");
                             } else {
-                                task.put("color", "#e2efda");
+                                task.put("color", "#e7ffc3");
                             }
                         }
                         task.put("task_finish", printDateFormat.format(finish.getTime()));
