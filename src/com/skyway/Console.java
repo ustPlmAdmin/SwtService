@@ -36,7 +36,7 @@ public class Console extends SpecUtils {
     public Context authenticate(HttpServletRequest request) throws IOException {
         Context context = super.authenticate(request);
         String username = context.getSession().getUserName();
-        if (username.equals("m.kim") || username.equals("s.beresnev") || username.equals("a.pagoda") || username.equals("a.pavlovich"))
+        if (username.equals("m.kim") || username.equals("s.beresnev") || username.equals("a.pagoda") || username.equals("a.pavlovich")  || username.equals("admin_platform"))
             return context;
         throw new AuthenticationException();
     }
@@ -683,13 +683,13 @@ public class Console extends SpecUtils {
     }
 
     @GET
-    @Path("/library")
-    public Response fillCatalog(@javax.ws.rs.core.Context HttpServletRequest request,
+    @Path("/fill_unit")
+    public Response fillUnit(@javax.ws.rs.core.Context HttpServletRequest request,
                                 @QueryParam("name") String name) {
         try {
             Context ctx = authenticate(request);
             String objectId = findScalar(ctx, "General Library", name, "id");
-            Map<String, Object> catalog = rec1(ctx, objectId);
+            Map<String, Object> catalog = fillUnit(ctx, objectId);
             return response(catalog);
         } catch (Exception e) {
             return error(e);
@@ -698,21 +698,57 @@ public class Console extends SpecUtils {
         }
     }
 
-    Map<String, Object> rec1(Context ctx, String objectId) throws FrameworkException {
+    @GET
+    @Path("/library")
+    public Response fillCatalog(@javax.ws.rs.core.Context HttpServletRequest request,
+                                @QueryParam("name") String name) {
+        try {
+            Context ctx = authenticate(request);
+            String objectId = findScalar(ctx, "General Library", name, "id");
+            Map<String, Object> catalog = fillUnitCode(ctx, objectId);
+            return response(catalog);
+        } catch (Exception e) {
+            return error(e);
+        } finally {
+            finish(request);
+        }
+    }
+
+    Map<String, Object> fillUnit(Context ctx, String objectId) throws FrameworkException {
         List<Map<String, String>> children = select(ctx, objectId, "from[Subclass].to.id", "from[Subclass].to.name");
         if (children.size() > 0) {
             Map<String, Object> childMap = new LinkedHashMap<>();
             for (Map<String, String> child : children) {
                 String childId = child.get("from[Subclass].to.id");
                 String childName = child.get("from[Subclass].to.name");
-                childMap.put(childName, rec1(ctx, childId));
+                childMap.put(childName, fillUnit(ctx, childId));
+            }
+            return childMap;
+        } else {
+            Map<String, Object> materials = new LinkedHashMap<>();
+            List<String> items = list(ctx, objectId, "from[Classified Item].to.id");
+            for (String id : items) {
+                query(ctx, "mod bus \"" + id + "\" \"Kit_UnitExt.Kit_Unit\" \"piece\"");
+            }
+            return materials;
+        }
+    }
+
+    Map<String, Object> fillUnitCode(Context ctx, String objectId) throws FrameworkException {
+        List<Map<String, String>> children = select(ctx, objectId, "from[Subclass].to.id", "from[Subclass].to.name");
+        if (children.size() > 0) {
+            Map<String, Object> childMap = new LinkedHashMap<>();
+            for (Map<String, String> child : children) {
+                String childId = child.get("from[Subclass].to.id");
+                String childName = child.get("from[Subclass].to.name");
+                childMap.put(childName, fillUnitCode(ctx, childId));
             }
             return childMap;
         } else {
             Map<String, Object> materials = new LinkedHashMap<>();
             List<String> items = list(ctx, objectId, "from[Classified Item].to.id");
             for (String id : items){
-                String unit = row(ctx, id, "attribute[XP_VPMReference_Ext.Unit]").get("attribute[XP_VPMReference_Ext.Unit]");
+                String unit = row(ctx, id, "attribute[Kit_UnitExt.Kit_Unit]").get("attribute[Kit_UnitExt.Kit_Unit]");
                 String code = "";
                 switch (unit) {
                     case "piece":
@@ -749,10 +785,9 @@ public class Console extends SpecUtils {
                         break;
                 }
                 if (!code.equals(""))
-                query(ctx, "mod bus \"" + id + "\" XP_VPMReference_Ext.UnitCode " + code);
+                query(ctx, "mod bus \"" + id + "\" \"Kit_UnitExt.Kit_UnitCode\" " + code);
             }
             return materials;
         }
     }
-
 }

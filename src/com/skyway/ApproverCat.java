@@ -94,15 +94,8 @@ public class ApproverCat extends SkyService {
                     if (task.get("task_finish") != null && !task.get("task_finish").isEmpty()){
                         Calendar finish = Calendar.getInstance();
                         finish.setTime(dateFormat.parse(task.get("task_finish")));
-                        if (finish.before(now))
+                        if (finish.before(now)) {
                             task.put("color", "#ffd9d9");
-                        else{
-                            finish.add(Calendar.DAY_OF_YEAR, -1);
-                            if (finish.before(now)) {
-                                task.put("color", "#ffd9d9");
-                            } else {
-                                task.put("color", "#e7ffc3");
-                            }
                         }
                         task.put("task_finish", printDateFormat.format(finish.getTime()));
                     }
@@ -133,7 +126,8 @@ public class ApproverCat extends SkyService {
             Context ctx = authenticate(request);
             String username = ctx.getSession().getUserName();
             Calendar prevMonth = Calendar.getInstance();
-            prevMonth.add(Calendar.MONTH, -1);
+//            prevMonth.add(Calendar.MONTH, -1);
+            prevMonth.add(Calendar.DAY_OF_YEAR, 1 -Calendar.getInstance().getTime().getDate());
             String[] attrs = {
                     "name:route_name",
                     "id"
@@ -155,10 +149,14 @@ public class ApproverCat extends SkyService {
             filterRoutesWithUserGroupTasks(ctx, username, routesWithWaitingTasks);
 
             List<Map<String, String>> routesFinishedWithMyTasks = findObjectsWhere(ctx, "Route", "*",
-                    "current == \"Complete\"" +
-                            " && attribute[Route Status] == \"Finished\" " +
-                            " && from[Route Node].to.name == \"" + username + "\" " +
-                            " && modified >= \"" + dateFormat.format(prevMonth.getTime()) + "\" ",
+//                    "current == \"Complete\"" +
+//                            " && attribute[Route Status] == \"Finished\" " +
+//                            " && from[Route Node].to.name == \"" + username + "\" " +
+//                            " && modified >= \"" + dateFormat.format(prevMonth.getTime()) + "\" ",
+                    "from[Route Node].to.name == \"" + username + "\" " +
+                            " && modified >= \"" + dateFormat.format(prevMonth.getTime()) + "\" " +
+                            " && to[Route Task].from.current == \"Complete\" " +
+                            " || to[Route Task].from.current == \"Assigned\" ",
                     attrs);
             filterCompletedRoutes(ctx, routesFinishedWithMyTasks);
 

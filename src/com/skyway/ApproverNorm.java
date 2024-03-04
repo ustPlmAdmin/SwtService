@@ -54,15 +54,19 @@ public class ApproverNorm extends SkyService {
                         "from[Route Task].to.name:route",
                         "from[Route Task].to.to[Object Route].from.name:erp",
                         "from[Route Task].to.to[Object Route].from.to[Subtask].from.name:phs");
+                if (attr.size() == 0 || !attr.get(0).get("erp").startsWith("ERP")) {
+                    attr = findRows(ctx, "Inbox Task", task.get("name"),
+                            "from[Route Task].to.to[Object Route].from.from[Object Route].to.to[Task Sub Route].from.from[Route Task].to.name:route",
+                            "from[Route Task].to.to[Object Route].from.from[Object Route].to.to[Task Sub Route].from.from[Route Task].to.to[Object Route].from.name:erp",
+                            "from[Route Task].to.to[Object Route].from.from[Object Route].to.to[Task Sub Route].from.from[Route Task].to.to[Object Route].from.to[Subtask].from.name:phs");
+                }
                 if (attr.size() > 0 && task.get("assigner_name").equals(username)) {
-                    if (attr.get(0).get("erp").startsWith("ERP")) {
-                        task.put("route", attr.get(0).get("route"));
-                        task.put("erp", attr.get(0).get("erp"));
-                        task.put("phs", attr.get(0).get("phs"));
-                        task.put("assigner", task.get("assigner_name"));
-                        task.put("assigned_time", printDateFormat.format(dateFormat.parse(task.get("modified"))));
-                        ERPtasks.add(task);
-                    }
+                    task.put("route", attr.get(0).get("route"));
+                    task.put("erp", attr.get(0).get("erp"));
+                    task.put("phs", attr.get(0).get("phs"));
+                    task.put("assigner", task.get("assigner_name"));
+                    task.put("assigned_time", printDateFormat.format(dateFormat.parse(task.get("modified"))));
+                    ERPtasks.add(task);
                 }
                 task.put("color", "#e2efda");
             }
@@ -83,8 +87,8 @@ public class ApproverNorm extends SkyService {
             List<Map<String, String>> ERProutes = findObjectsWhere(ctx, "Route", "*",
                     "current == \"In Process\"" +
                             " && attribute[Route Status] == \"Started\" " +
-                            " && from[Route Node].to == \"Test Group Tech\" " +//TEST
-//                            " && from[Route Node].to == \"Time norm group\" " +//PROD
+//                            " && from[Route Node].to == \"Test Group Tech\" " +//TEST
+                            " && from[Route Node].to == \"Time norm group\" " +//PROD
                             " && owner == \"al.kuznetsov\" || owner == \"s.kirichenko\" || owner == \"m.kim\"",
                     "id",
                     "name",
@@ -97,8 +101,8 @@ public class ApproverNorm extends SkyService {
                 List<Map<String, String>> parents = findObjectsWhere(ctx, "Task", "*",
                         "current == \"Review\" " +
                                 " && from[Object Route].to.attribute[Route Status] == \"Finished\" " +
-                                " && from[Object Route].to.from[Route Node].to == \"Test Group Tech\" " +//TEST
-//                                " && from[Object Route].to.from[Route Node].to == \"Time norm group\" " +//PROD
+//                                " && from[Object Route].to.from[Route Node].to == \"Test Group Tech\" " +//TEST
+                                " && from[Object Route].to.from[Route Node].to == \"Time norm group\" " +//PROD
                                 " && from[Object Route].to.owner == \"al.kuznetsov\" || from[Object Route].to.owner == \"s.kirichenko\" || from[Object Route].to.owner == \"m.kim\"",
                         "from[Object Route].to.id:id",
                         "from[Object Route].to.name:name",
