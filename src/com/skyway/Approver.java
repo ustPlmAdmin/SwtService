@@ -33,7 +33,9 @@ public class Approver extends SkyService {
                             " || from[Project Task].to.type == \"Route Task User\")",
                     "id",
                     "name",
-                    "description",
+                    "originated:start",
+                    "attribute[Scheduled Completion Date]:finish",
+                    "from[Route Task].to.name:route",
                     "from[Project Task].to.type:assigner_type",
                     "owner:assigner_name");
 
@@ -45,6 +47,12 @@ public class Approver extends SkyService {
             for (Map<String, String> task : tasks) {
                 if (task.get("assigner_type") != null && task.get("assigner_name") != null && task.get("assigner_type").equals("Route Task User") && !groups.contains(task.get("assigner_name").toLowerCase())) {
                     continue;
+                }
+                task.put("start", printDateFormat.format(dateFormat.parse(task.get("start"))));
+                if (task.get("finish") != null && !task.get("finish").equals("") ) {
+                    task.put("finish", printDateFormat.format(dateFormat.parse(task.get("finish"))));
+                } else {
+                    task.put("finish", String.valueOf(Calendar.getInstance().getTime()));
                 }
                 String caId = scalar(ctx, task.get("id"), "from[Route Task].to.to[Object Route].to.to[Object Route].from.id");
                 if (caId != null) {
@@ -70,6 +78,10 @@ public class Approver extends SkyService {
                     ca.put("caowner", caowner.get("firstname").substring(0, 1) + ". " + caowner.get("lastname") + " (" + ca.get("caowner") + ")");
 
                     task.putAll(ca);
+                } else {
+                    if (task.get("assigner_type") != null && task.get("assigner_name") != null && task.get("assigner_type").equals("Person") && task.get("assigner_name").equals(username)) {
+                        my_tasks.add(task);
+                    }
                 }
             }
 
@@ -138,20 +150,21 @@ public class Approver extends SkyService {
 
                 List<Map<String, String>> route_tasks = findRows(ctx, "Route", route.get("name"),
                         "to[Route Task].from.name:task",
+                        "to[Route Task].from.description:description",
                         "to[Route Task].modified:assigned_time",
+                        "to[Route Task].from.attribute[Scheduled Completion Date]:finish",
                         "to[Route Task].from.from[Project Task].to:assigner",
                         "to[Route Task].from.from[Project Task].to.attribute[First Name]:assigner_first_name",
                         "to[Route Task].from.from[Project Task].to.attribute[Last Name]:assigner_last_name");
                 Map<String, String> first_route_task = route_tasks.get(0);
                 route.put("task", first_route_task.get("task"));
+                route.put("description", first_route_task.get("description"));
                 route.put("assigner", first_route_task.get("assigner_first_name") + " " + first_route_task.get("assigner_last_name"));
                 route.put("assigned_time", printDateFormat.format(dateFormat.parse(first_route_task.get("assigned_time"))));
-                if (route.get("status") != null && route.get("status").equals("Finished")) {
-                    route.put("color", "#e2efda");
-                } else if (route.get("status") != null && route.get("status").equals("Started")) {
-                    route.put("color", "#ffc000");
-                } else if (route.get("status") != null && route.get("status").equals("Stopped")) {
-                    route.put("color", "#e34f4f");
+                route.put("finish", printDateFormat.format(dateFormat.parse(first_route_task.get("finish"))));
+//                route.put("finish", first_route_task.get("finish"));
+                if (route.get("status") != null && route.get("status").equals("Stopped")) {
+                    route.put("color", "#ffd9d9");
                 }
                 String r = findScalar(ctx, "*", route.get("name"), "to[Object Route].from.name");//PARENT
                 if (r != null && r.length() > 0 && r.startsWith("ERP")) {
@@ -168,9 +181,6 @@ public class Approver extends SkyService {
                             route.put("parent", " ");
                         }
                     }
-                }
-                if (route.get("current") != null && route.get("current").equals("Review")) {
-                    route.put("color", "#ffffff");
                 }
                 if (!route.get("parent").equals(" ")) {//ROOT
                     String root = findScalar(ctx, "Task", r, "to[Subtask].from.name");
@@ -199,12 +209,20 @@ public class Approver extends SkyService {
                     route.put("caname", findScalar(ctx, "Route", route.get("name"), "to[Object Route].from.name"));
                 List<Map<String, String>> route_tasks = findRows(ctx, "Route", route.get("name"),
                         "to[Route Task].from.name:task", "to[Route Task].modified:assigned_time",
+                        "to[Route Task].from.attribute[Scheduled Completion Date]:finish",
+                        "to[Route Task].from.description:description",
                         "to[Route Task].from.from[Project Task].to.attribute[First Name]:assigner_first_name",
                         "to[Route Task].from.from[Project Task].to.attribute[Last Name]:assigner_last_name");
                 Map<String, String> first_route_task = route_tasks.get(0);
                 route.put("task", first_route_task.get("task"));
+                route.put("description", first_route_task.get("description"));
                 route.put("assigner", first_route_task.get("assigner_first_name") + " " + first_route_task.get("assigner_last_name"));
                 route.put("assigned_time", printDateFormat.format(dateFormat.parse(first_route_task.get("assigned_time"))));
+                if (first_route_task.get("finish") != null && !first_route_task.get("finish").equals("") ) {
+                    route.put("finish", printDateFormat.format(dateFormat.parse(first_route_task.get("finish"))));
+                } else {
+                    route.put("finish", String.valueOf(Calendar.getInstance().getTime()));
+                }
             }
 
             Map<String, Object> result = new LinkedHashMap<>();
