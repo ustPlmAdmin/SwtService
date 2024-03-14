@@ -33,6 +33,7 @@ public class Approver extends SkyService {
                             " || from[Project Task].to.type == \"Route Task User\")",
                     "id",
                     "name",
+                    "attribute[Title]:description",
                     "originated:start",
                     "attribute[Scheduled Completion Date]:finish",
                     "from[Route Task].to.name:route",
@@ -59,8 +60,8 @@ public class Approver extends SkyService {
                     Map<String, String> ca = row(ctx, caId,
                             "name:caname",
                             "owner:caowner",
-                            "current",
-                            "description:cadescription");
+                            "current"/*,
+                            "description:cadescription"*/);
 
                     if (ca.get("current").equals("In Approval"))
                         if (task.get("assigner_type").equals("Person")) {
@@ -150,7 +151,7 @@ public class Approver extends SkyService {
 
                 List<Map<String, String>> route_tasks = findRows(ctx, "Route", route.get("name"),
                         "to[Route Task].from.name:task",
-                        "to[Route Task].from.description:description",
+                        "to[Route Task].from.attribute[Title]:description",
                         "to[Route Task].modified:assigned_time",
                         "to[Route Task].from.attribute[Scheduled Completion Date]:finish",
                         "to[Route Task].from.from[Project Task].to:assigner",
@@ -210,7 +211,7 @@ public class Approver extends SkyService {
                 List<Map<String, String>> route_tasks = findRows(ctx, "Route", route.get("name"),
                         "to[Route Task].from.name:task", "to[Route Task].modified:assigned_time",
                         "to[Route Task].from.attribute[Scheduled Completion Date]:finish",
-                        "to[Route Task].from.description:description",
+                        "to[Route Task].from.attribute[Title]:description",
                         "to[Route Task].from.from[Project Task].to.attribute[First Name]:assigner_first_name",
                         "to[Route Task].from.from[Project Task].to.attribute[Last Name]:assigner_last_name");
                 Map<String, String> first_route_task = route_tasks.get(0);
