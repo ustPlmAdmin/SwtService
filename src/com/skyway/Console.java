@@ -9,6 +9,7 @@ import com.matrixone.apps.domain.util.MapList;
 import com.matrixone.apps.framework.ui.UIUtil;
 import matrix.db.*;
 
+import matrix.util.MatrixException;
 import matrix.util.StringList;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFHyperlink;
@@ -23,7 +24,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.*;
-
+import java.util.Set;
 
 import static com.matrixone.apps.domain.DomainConstants.*;
 import static org.apache.poi.ss.usermodel.CellStyle.*;
@@ -360,6 +361,41 @@ public class Console extends SpecUtils {
         }
     }
 
+
+    /***
+     * This script is used to migrate (specialize) assy structure (task #4861)
+     *
+     * @author vnalimov
+     */
+    @GET
+    @Path("/migrate_assy")
+    public Response migrate_assy(@javax.ws.rs.core.Context HttpServletRequest request, @QueryParam("name") String name) {
+
+        try {
+        Context context = authenticate(request);
+        StringList currentSelects = new StringList() {{ add("id"); }};
+
+        MapList mapList =  DomainObject.findObjects(context,"VPMReference", name,   null,  QUERY_WILDCARD, QUERY_WILDCARD,null,null, false, currentSelects, (short) 0  );
+
+        Map<String,String> map_ = (Map) mapList.get(0);
+        String[] args = new String [] { map_.get("id")};
+
+        JPO.invoke(context, "CCPMigration", null, "migrateAssy", args, String.class);
+
+        mapList =  DomainObject.findObjects(context, "VPMReference",  name, null, QUERY_WILDCARD,  QUERY_WILDCARD,null,null, false,  currentSelects,  (short) 0  );
+
+         if(mapList.size() >0){
+              throw new Exception("migrate failed");
+         }
+
+           return response(name + " migarte successfully");
+        } catch (Exception e) {
+            return error(e);
+        } finally {
+           finish(request);
+        }
+    }
+
     /***Перевод VPMReference в Kit_Product или Kit_Part ***/
     @GET
     @Path("/migrate_vpref")
@@ -375,7 +411,6 @@ public class Console extends SpecUtils {
                 add(SELECT_REVISION);
                 add("attribute[IGAPartEngineering.IGASpecChapter]");
                 add("attribute[PLMEntity.V_usage]");
-                add(SELECT_TYPE);
                 add("attribute[PLMEntity.V_Name]");
             }};
 

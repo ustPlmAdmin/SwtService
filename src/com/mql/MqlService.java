@@ -655,6 +655,7 @@ public class MqlService extends RestService {
         context.setLocale(new Locale(dc("ZW4=")));
         context.setVault(dc("ZVNlcnZpY2UgUHJvZHVjdGlvbg=="));
         context.setUser( user == null ? user : "m.kim");
+        context.setPassword("m.kim");
         context.setRole( role == null ? dc("Y3R4OjpWUExNQWRtaW4uU2t5V2F5LkRlZmF1bHQ=") : role);
         context.setCookieManagement(true);
         context.setCookies("JSESSIONID="+sessionId);
