@@ -31,7 +31,7 @@ import static org.apache.poi.ss.usermodel.CellStyle.*;
 /**
  * Бекэнд виджета SWT Console
  * */
-//@Path("")
+@Path("")
 public class Console extends SpecUtils {
 
     public Context authenticate(HttpServletRequest request) throws IOException {
@@ -361,40 +361,374 @@ public class Console extends SpecUtils {
         }
     }
 
-
     /***
      * This script is used to migrate (specialize) assy structure (task #4861)
-     *
-     * @author vnalimov
      */
     @GET
     @Path("/migrate_assy")
-    public Response migrate_assy(@javax.ws.rs.core.Context HttpServletRequest request, @QueryParam("name") String name) {
+    public Response migrate_assy(@javax.ws.rs.core.Context HttpServletRequest request, @QueryParam("name") String name) throws Exception {
 
-        try {
         Context context = authenticate(request);
+        Map resp = new HashMap();
+        // Context context = authWithSession("https://3dspace-m001.sw-tech.by:444/internal/", request.getCookies()[0].getValue(), "m.kim", "ctx::VPLMCreator.SkyWay.Common Space");
+        //String[] args = new String [] { "36284.36534.21241.63054"};
         StringList currentSelects = new StringList() {{ add("id"); }};
-
-        MapList mapList =  DomainObject.findObjects(context,"VPMReference", name,   null,  QUERY_WILDCARD, QUERY_WILDCARD,null,null, false, currentSelects, (short) 0  );
-
+        MapList mapList =  DomainObject.findObjects(context,
+                "VPMReference",   //type
+                name,        // name
+                null,        // revision
+                QUERY_WILDCARD,  // owner
+                QUERY_WILDCARD,  // vault
+                null,
+                null,        // query name
+                false,       // expand type
+                currentSelects,     // selects
+                (short) 0       // object limit
+        );
         Map<String,String> map_ = (Map) mapList.get(0);
         String[] args = new String [] { map_.get("id")};
 
-        JPO.invoke(context, "CCPMigration", null, "migrateAssy", args, String.class);
+        if (args.length == 0) {
+            throw new Exception("Provide root object id as first argument");
+        }
 
-        mapList =  DomainObject.findObjects(context, "VPMReference",  name, null, QUERY_WILDCARD,  QUERY_WILDCARD,null,null, false,  currentSelects,  (short) 0  );
+        boolean debug = false;
+        if (args.length == 2) {
+            debug = "true".equalsIgnoreCase(args[1]);
+            System.out.println("Debug mode is on. DB won't be impacted, only log will be created");
+        }
 
-         if(mapList.size() >0){
-              throw new Exception("migrate failed");
-         }
+        String sId = args[0];
+        DomainObject assy = DomainObject.newInstance(context, sId);
+        StringList objSelects = getAssySelectable();
+        Map mAssy = assy.getInfo(context, objSelects);
+        MapList mlStructure = new MapList();
+        mlStructure.add(mAssy);
+        mlStructure.addAll(getStructure(context, sId, objSelects));
+        Set<String> sAllIDs = new HashSet<>();
+        for (Object obj : mlStructure) {
+            Map map = (Map) obj;
+            String sPID = (String) map.get("physicalid");
+            sAllIDs.add(sPID);
+        }
 
-           return response(name + " migarte successfully");
+        try {
+            ContextUtil.startTransaction(context, true);
+
+            long timeStart = System.currentTimeMillis();
+            Set<String> sUniqueIDs = new HashSet<>();
+            for (Object obj : mlStructure) {
+                Map map = (Map) obj;
+                MapList mlRevs = geAllRevs(context, map, objSelects);
+
+                for (Object o : mlRevs) {
+                    Map r_ = updateProduct(context, (Map) o, sUniqueIDs, sAllIDs, debug);
+                    resp.putAll(r_);
+                }
+            }
+
+            long time = System.currentTimeMillis() - timeStart;
+            System.out.println("All products successfully processed and it takes: " + time + " ms");
+            ContextUtil.commitTransaction(context);
+            return response(resp);
         } catch (Exception e) {
+            ContextUtil.abortTransaction(context);
             return error(e);
         } finally {
-           finish(request);
+            finish(request);
         }
     }
+
+    private Map updateProduct(Context context, Map m, Set<String> sUniqueIDs, Set<String> sAllIDs, boolean debug) {
+        String sPID = (String) m.get("physicalid");
+        String sType = (String) m.get(SELECT_TYPE);
+        String sName = (String) m.get(SELECT_NAME);
+        String sSpecChapter = (String) m.get("attribute[IGAPartEngineering.IGASpecChapter]");
+        String sUsage = (String) m.get("attribute[PLMEntity.V_usage]");
+        HashMap<String,String> res = new HashMap();
+        boolean isChanged = false;
+        boolean isFlexible = isFlexible(m);
+
+        if (!sUniqueIDs.contains(sPID)) {
+            StringList slActions = new StringList();
+            String sNewType = "";
+            boolean findSameVName = false;
+            String[] extNames = new String[]{};
+
+            if ("VPMReference".equals(sType)) {
+                switch (sSpecChapter) {
+                    case "Assemblies": {
+                        if ("".equals(sUsage)) {
+                            findSameVName = true;
+                            if (!isFlexible)
+                                sNewType = "Kit_Product";
+                        } else
+                            slActions.add(String.format("Usage is '%s'", sUsage));
+                        break;
+                    }
+                    case "Parts": {
+                        if ("3DPart".equals(sUsage)) {
+                            findSameVName = true;
+                            if (!isFlexible) {
+                                sNewType = "Kit_Part";
+                                extNames = new String[]{"Kit_MatExt", "Kit_MatNExt"};
+                            }
+                        } else
+                            slActions.add(String.format("Usage is '%s'", sUsage));
+                        break;
+                    }
+/*                    case RANGE_STANDARD_COMPONENTS: {
+                        sNewType = TYPE_KIT_STANDARD_PRODUCT;
+                        needExt = true;
+                        break;
+                    }
+                    case RANGE_OTHER_COMPONENTS: {
+                        sNewType = TYPE_KIT_OEM_PRODUCT;
+                        needExt = true;
+                        break;
+                    }
+                    case RANGE_MATERIALS: {
+                        sNewType = TYPE_KIT_MATERIAL;
+                        needExt = true;
+                        break;
+                    }*/
+                }
+            } else if ("Structure_Member".equals(sType) || "Structure_Plate".equals(sType)) {
+                if ("Parts".equals(sSpecChapter))
+                    extNames = new String[]{"Kit_MatExt", "Kit_MatNExt"};
+                else
+                    slActions.add(String.format("Chapter is '%s'", sSpecChapter));
+            } else if ("Drawing".equals(sType)) {
+                findSameVName = true;
+                if (!isFlexible)
+                    sNewType = "Kit_Drawing";
+            } else
+                slActions.add(String.format("Type is '%s'", sType));
+
+            //change BO type if needed
+            if (!"".equals(sNewType)) {
+               try {
+                   slActions.add(modType(context, sPID, sNewType, debug));
+               } catch (Exception ex) {
+                   res.put(sName, ex.getMessage());
+               } finally {
+                   isChanged = true;
+               }
+            }
+
+            //change BO type if needed
+            if (findSameVName)
+            {
+                try {
+                    slActions.add(modDuplicates(context, m, sAllIDs, debug));
+                } catch (Exception ex){
+                    res.put(sName,ex.getMessage());
+                } finally {
+                    isChanged = true;
+                }
+            }
+
+            //add interfaces if needed
+            if (extNames.length > 0)
+            {
+                try {
+                   slActions.add(addExtensions(context, sPID, extNames, debug));
+                } catch (Exception ex){
+                    res.put(sName,ex.getMessage());
+                } finally {
+                    isChanged = true;
+                }
+            }
+            //log all found types in assy VPMReference, Drawing and others
+            //logBO(m, String.join(ACTIONS_DELIMITER, slActions));
+
+            //log mod bus at first then log mod SR
+            if (!"".equals(sNewType))
+            {
+                try {
+                    updateSemanticRelations(context, sPID, sType, sNewType, debug);
+                } catch (Exception ex){
+                    res.put(sName,ex.getMessage());
+                } finally {
+                    isChanged = true;
+                }
+            }
+
+            if (!isChanged && !Arrays.asList("Kit_MatExt", "Kit_MatNExt", "Kit_Drawing","Kit_Product").contains(sType)) {
+                res.put(sName," not migrated");
+            }
+            //no need to process one and the same object several times in any case
+            sUniqueIDs.add(sPID);
+        }
+
+        return res;
+    }
+
+
+    private String addExtensions(Context context, String sPID, String[] extNames, boolean debug) throws MatrixException {
+        for (String extName : extNames)
+            execWithDebug(context, String.format("mod bus %s add interface '%s'", sPID, extName), debug);
+
+        return String.format("Interfaces '%s' were added", String.join(";", extNames));
+    }
+
+    private String modDuplicates(Context context, Map m, Set<String> sAllIDs, boolean debug) throws MatrixException {
+        String logicalID = (String) m.get("logicalid");
+        String type = (String) m.get(SELECT_TYPE);
+        String title = (String) m.get("attribute[PLMEntity.V_Name]");
+        StringList slActions = new StringList();
+        if (UIUtil.isNotNullAndNotEmpty(title)) {
+            String where = String.format("%s=='%s'&&%s!=%s", "attribute[PLMEntity.V_Name]", title, "logicalid", logicalID);
+            MapList ml = DomainObject.findObjects(context, type, "vplm", where, getAssySelectable());
+
+            String sNewTitle = String.format("Dup_%s_%s", System.currentTimeMillis(), title);
+            for (Object o : ml) {
+                Map mp = (Map) o;
+                modDuplicate(context, mp, sAllIDs, sNewTitle, debug);
+            }
+        } else
+            slActions.add("Title is empty");
+
+        return String.join(";", slActions);
+    }
+
+    private String modDuplicate(Context context, Map m, Set<String> sAllIDs, String sNewTitle, boolean debug) throws MatrixException {
+
+        final List<String> typesToExclude = new ArrayList<>(Arrays.asList(
+                "PPRContext",
+                "Electrical3DSystem",
+                "ElectricalGeometry"
+        ));
+
+        String sAction = "";
+        String sPID = (String) m.get("physicalid");
+        String sName = (String) m.get(SELECT_NAME);
+        String sType = (String) m.get(SELECT_TYPE);
+        boolean isFlex = isFlexible(m);
+        boolean isChild = sAllIDs.contains(sPID);
+        boolean isExcluded = typesToExclude.contains(sType);
+
+        if (!isExcluded) {
+            if (isChild)
+                sAction = String.format("Duplicated Title (name=%s, child) hasn't been changed", sName);
+
+            if (isChild && isFlex)
+                sAction = String.format("Duplicated Title (name=%s, flex and child) hasn't been changed", sName);
+
+            if(!isChild) {
+                execWithDebug(context, String.format( "mod bus %s '%s' '%s'", sPID, "PLMEntity.V_Name", sNewTitle), debug);
+                if(isFlex)
+                    sAction = String.format("Duplicated Title (name=%s, flex) was replaced by '%s'", sName, sNewTitle);
+                else
+                    sAction = String.format("Duplicated Title (name=%s) was replaced by '%s'", sName, sNewTitle);
+            }
+        } else
+            sAction = String.format("Objects of '%s' type are excluded from duplicating algorithm", sType);
+
+        return sAction;
+    }
+
+    //return boolean and put string val into the map for log
+    private boolean isFlexible(Map m) {
+        String sType = (String) m.get(SELECT_TYPE);
+        String sFlexIGA = (String) m.get("attribute[IGAPartEngineering.IGATFlexible]");
+        String sFlexSW = (String) m.get("attribute[IGAPartEngineering.IGAIGAFlexible]");
+        boolean isFlexible = "True".equalsIgnoreCase(sFlexIGA) || "True".equalsIgnoreCase(sFlexSW);
+
+        if ("Drawing".equals(sType)) {
+            List<String> lDrwFlexIGA = normalizeToList(m.get(String.format("to[%s].from.%s", "VPMRepInstance", "attribute[IGAPartEngineering.IGATFlexible]")));
+            List<String> lDrwFlexSW = normalizeToList(m.get(String.format("to[%s].from.%s", "VPMRepInstance", "attribute[IGAPartEngineering.IGAIGAFlexible]")));
+            isFlexible = lDrwFlexIGA.contains("TRUE") || lDrwFlexSW.contains("TRUE");
+        }
+
+        //for log
+        m.put("isFlexible", String.valueOf(isFlexible));
+
+        return isFlexible;
+    }
+
+    public static List<String> normalizeToList(Object obj) {
+
+        final String DELIMITER_BELL = "\u0007";
+
+        List<String> list = new ArrayList<>();
+
+        // 1) DomainObject.findObjects() return String with "BELL" char as delimiter: "id1id2..."
+
+        if (obj instanceof String) {
+            String str = (String) obj;
+            if (str.contains(DELIMITER_BELL))
+                list = Arrays.asList(str.split(DELIMITER_BELL));
+            else
+                list.add(str);
+        } else if (obj instanceof StringList) {
+            StringList sl = (StringList) obj;
+            list = sl.toList();
+        }
+
+        return list;
+    }
+
+
+    private String modType(Context context, String sPID, String sNewType, boolean debug) throws MatrixException {
+        execWithDebug(context, String.format("mod bus %s type '%s'", sPID, sNewType), debug);
+        return String.format("Type was replaced by %s", sNewType);
+    }
+
+    private void execWithDebug(Context context, String cmd, boolean debug) throws MatrixException {
+        if (!debug)
+            MQLCommand.exec(context, cmd);
+    }
+
+    private MapList geAllRevs(Context context, Map map, StringList objSelects) throws Exception {
+        //found object's map itself
+        MapList mlRevs = new MapList();
+        mlRevs.add(map);
+        //all its revs if exist
+        String sRefPID = (String) map.get("physicalid");
+        DomainObject domObj = DomainObject.newInstance(context, sRefPID);
+        mlRevs.addAll(domObj.getRevisionsInfo(context, objSelects, new StringList()));
+
+        return mlRevs;
+    }
+
+    private MapList getStructure(Context context, String sId, StringList objSelects) throws Exception {
+        DomainObject assy = DomainObject.newInstance(context, sId);
+
+        // getRelatedObjects parameters
+        String relPattern = String.format("%s,%s", "VPMInstance", "VPMRepInstance");
+        String typePattern = String.format("%s,%s", "VPMReference", "Drawing");
+        StringList relSelects = new StringList(SELECT_RELATIONSHIP_ID);
+        boolean getTo = false;
+        boolean getFrom = true;
+        short recurseToLevel = 0;
+        String objectWhere = "";
+        String relWhere = "";
+        int limit = 0;
+
+        return assy.getRelatedObjects(context, relPattern, typePattern, objSelects, relSelects, getTo, getFrom, recurseToLevel, objectWhere, relWhere, limit);
+    }
+
+    private StringList getAssySelectable() {
+        StringList objSelects = new StringList();
+        objSelects.add("physicalid");
+        objSelects.add("logicalid");
+        objSelects.add(SELECT_TYPE);
+        objSelects.add(SELECT_NAME);
+        objSelects.add(SELECT_REVISION);
+        objSelects.add(SELECT_CURRENT);
+        objSelects.add(SELECT_OWNER);
+        objSelects.add(SELECT_PROJECT);
+        objSelects.add("attribute[IGAPartEngineering.IGASpecChapter]");
+        objSelects.add("attribute[PLMEntity.V_usage]");
+        objSelects.add("attribute[PLMEntity.V_Name]");
+        objSelects.add("attribute[IGAPartEngineering.IGATFlexible]");
+        objSelects.add("attribute[IGAPartEngineering.IGAIGAFlexible]");
+        objSelects.add(String.format("to[%s].from.%s", "VPMRepInstance", "attribute[IGAPartEngineering.IGATFlexible]"));
+        objSelects.add(String.format("to[%s].from.%s", "VPMRepInstance", "attribute[IGAPartEngineering.IGAIGAFlexible]"));
+        return objSelects;
+    }
+
 
     /***Перевод VPMReference в Kit_Product или Kit_Part ***/
     @GET

@@ -657,10 +657,10 @@ public class MqlService extends RestService {
         context.setUser( user == null ? user : "m.kim");
         context.setPassword("m.kim");
         context.setRole( role == null ? dc("Y3R4OjpWUExNQWRtaW4uU2t5V2F5LkRlZmF1bHQ=") : role);
-        context.setCookieManagement(true);
-        context.setCookies("JSESSIONID="+sessionId);
-        context.setSessionId(sessionId);
-        context.setRequestCookie("JSESSIONID="+sessionId);
+       // context.setCookieManagement(true);
+       // context.setCookies("JSESSIONID="+sessionId);
+       // context.setSessionId(sessionId);
+       // context.setRequestCookie("JSESSIONID="+sessionId);
         context.connect();
         return context;
     }
