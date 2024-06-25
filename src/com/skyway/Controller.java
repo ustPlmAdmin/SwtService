@@ -27,6 +27,7 @@ public class Controller extends ModelerBase {
                 ApproverCat.class,
                 ApproverBoss.class,
                 ApproverNorm.class,
+                Monitor.class,
         };
     }
 }

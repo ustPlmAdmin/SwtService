@@ -1,7 +1,6 @@
 package com.skyway;
 
 import com.matrixone.apps.domain.util.FrameworkException;
-import com.mql.MqlService;
 import matrix.db.Context;
 
 import javax.servlet.http.HttpServletRequest;
@@ -50,8 +49,40 @@ public class ApproverCat extends SkyService {
         }
     }
 
-    void filterCompletedRoutes(Context ctx, List<Map<String, String>> routes) throws FrameworkException {
+    void filterTasks(Context ctx, String username, List<Map<String, String>> routes) throws FrameworkException, ParseException {
         getCa(ctx, routes);
+        Calendar now = Calendar.getInstance();
+        for (Map<String, String> route : routes) {
+            for (Map<String, String> task : findRows(ctx, "*", route.get("task_name"),
+                    "current:task_current",
+                    "originated:task_originated",
+//                    "from[Route Task].to.attribute[Route Status]:status",
+                    "attribute[Title]:task_comment",
+                    "attribute[Scheduled Completion Date]:task_finish",
+                    "from[Project Task].to:assigner_id",
+                    "from[Project Task].to.attribute[First Name]:assigner_first_name",
+                    "from[Project Task].to.attribute[Last Name]:assigner_last_name")) {
+
+                task.put("task_originated", printDateFormat.format(dateFormat.parse(task.get("task_originated"))));
+                if (task.get("task_finish") != null && !task.get("task_finish").isEmpty()){
+                    Calendar finish = Calendar.getInstance();
+                    finish.setTime(dateFormat.parse(task.get("task_finish")));
+                    if (finish.before(now)) {
+                        task.put("color", "#ffd9d9");
+                    }
+                    task.put("task_finish", printDateFormat.format(finish.getTime()));
+                }
+
+                task.putIfAbsent("assigner_id", username);
+
+                task.put("task_assigner", (task.getOrDefault("assigner_first_name", "") + " "
+                        + task.getOrDefault("assigner_last_name", "") + " "
+                        + task.get("assigner_id")).trim());
+
+                if (task.get("assigner_id").equals(username))
+                    route.putAll(task);
+            }
+        }
     }
 
     private void getCa(Context ctx, List<Map<String, String>> routes) throws FrameworkException {
@@ -91,7 +122,7 @@ public class ApproverCat extends SkyService {
                         "to[Route Task].from.from[Project Task].to.attribute[Last Name]:assigner_last_name")) {
 
                     task.put("task_originated", printDateFormat.format(dateFormat.parse(task.get("task_originated"))));
-                    if (task.get("task_finish") != null && !task.get("task_finish").isEmpty()){
+                    if (task.get("task_finish") != null && !task.get("task_finish").isEmpty()) {
                         Calendar finish = Calendar.getInstance();
                         finish.setTime(dateFormat.parse(task.get("task_finish")));
                         if (finish.before(now)) {
@@ -126,20 +157,22 @@ public class ApproverCat extends SkyService {
             Context ctx = authenticate(request);
             String username = ctx.getSession().getUserName();
             Calendar prevMonth = Calendar.getInstance();
-//            prevMonth.add(Calendar.MONTH, -1);
-            prevMonth.add(Calendar.DAY_OF_YEAR, 1 -Calendar.getInstance().getTime().getDate());
+            Date date = new Date(prevMonth.getTime().getYear(), prevMonth.getTime().getMonth(), 1);
+            prevMonth.setTime(date);
+
             String[] attrs = {
                     "name:route_name",
                     "id"
             };
             // due date
-            List<Map<String, String>> routesWithMyActiveTasks = findObjectsWhere(ctx, "Route", "*",
-                    "current == \"In Process\"" +
-                            " && attribute[Route Status] == \"Started\" " +
-                            " && to[Route Task].from.owner == \"" + username + "\" ",
-                    attrs);
+            List<Map<String, String>> myActiveTasks = findObjectsWhere(ctx, "Inbox Task", "*",
+                    "current == \"Assigned\"" +
+                            " && from[Route Task].to.current == \"In Process\"" +
+                            " && from[Route Task].to.attribute[Route Status] == \"Started\" " +
+                            " && from[Project Task].to == \"" + username + "\" ",
+                    "from[Route Task].to:route_name", "name:task_name", "from[Route Task].to.id:id");
 
-            filterRoutesWithUserTasks(ctx, username, routesWithMyActiveTasks);
+            filterTasks(ctx, username, myActiveTasks);
 
             List<Map<String, String>> routesWithWaitingTasks = findObjectsWhere(ctx, "Route", "*",
                     "current == \"In Process\"" +
@@ -148,25 +181,22 @@ public class ApproverCat extends SkyService {
                     attrs);
             filterRoutesWithUserGroupTasks(ctx, username, routesWithWaitingTasks);
 
-            List<Map<String, String>> routesFinishedWithMyTasks = findObjectsWhere(ctx, "Route", "*",
-//                    "current == \"Complete\"" +
-//                            " && attribute[Route Status] == \"Finished\" " +
-//                            " && from[Route Node].to.name == \"" + username + "\" " +
-//                            " && modified >= \"" + dateFormat.format(prevMonth.getTime()) + "\" ",
-                    "from[Route Node].to.name == \"" + username + "\" " +
+            List<Map<String, String>> myFinishedTasks = findObjectsWhere(ctx, "Inbox Task", "*",
+                    "from[Project Task].to.name == \"" + username + "\" " +
                             " && modified >= \"" + dateFormat.format(prevMonth.getTime()) + "\" " +
-                            " && to[Route Task].from.current == \"Complete\" " +
-                            " || to[Route Task].from.current == \"Assigned\" ",
-                    attrs);
-            filterCompletedRoutes(ctx, routesFinishedWithMyTasks);
+                            " && from[Route Task].to.to[Route Task].from.current == \"Complete\" " +
+                            " || from[Route Task].to.to[Route Task].from.current == \"Assigned\" ",
+
+                    "from[Route Task].to:route_name", "name:task_name", "from[Route Task].to.id:id");
+            filterTasks(ctx, username, myFinishedTasks);
 
             Map<String, List<Map<String, String>>> result = new LinkedHashMap<>();
-            result.put("routesWithMyActiveTasks", routesWithMyActiveTasks);
+            result.put("routesWithMyActiveTasks", myActiveTasks);
             result.put("routesWithWaitingTasks", routesWithWaitingTasks);
-            result.put("routesFinishedWithMyTasks", routesFinishedWithMyTasks);
+            result.put("routesFinishedWithMyTasks", myFinishedTasks);
 
 
-            Object[] arr = {routesWithMyActiveTasks, routesWithWaitingTasks, routesFinishedWithMyTasks};
+            Object[] arr = {routesWithWaitingTasks};
 
             approverList(ctx, arr, username);
 
