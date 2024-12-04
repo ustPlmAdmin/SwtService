@@ -35,11 +35,11 @@ public class Monitor extends SkyService {
     private List<Map<String, String>> getChild(Context ctx, String parent) throws FrameworkException {
         List<Map<String, String>> child = new LinkedList<>();
         if (parent.startsWith("E")) {
-            child = findRows(ctx, "Task", parent, "from[Object Route].to:name", "from[Object Route].to.current:status");
+            child = findRows(ctx, "Task", parent, "from[Object Route].to:name", "from[Object Route].to.attribute[Title]:title", "from[Object Route].to.current:status", "from[Object Route].to.id:id");
         } else if (parent.startsWith("R")) {
-            child = findRows(ctx, "Route", parent, "to[Route Task].from:name", "to[Route Task].from.current:status");
+            child = findRows(ctx, "Route", parent, "to[Route Task].from:name","to[Route Task].from.attribute[Title]:title", "to[Route Task].from.current:status", "to[Route Task].from.id:id");
         } else {
-            child = findRows(ctx, "Inbox Task", parent, "to[Task Sub Route].from:name", "to[Task Sub Route].from.current:status");
+            child = findRows(ctx, "Inbox Task", parent, "from[Task Sub Route].to:name", "from[Task Sub Route].to.attribute[Title]:title", "from[Task Sub Route].to.current:status", "from[Task Sub Route].to.id:id");
         }
         return child;
     }
