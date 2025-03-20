@@ -83,13 +83,6 @@ public class Approver extends SkyService {
                             group_tasks.add(task);
                         }
 
-
-//                    Map<String, String> caowner = findObject(ctx, "Person", ca.get("caowner"),
-//                            "attribute[First Name]:firstname",
-//                            "attribute[Last Name]:lastname");
-//
-//                    ca.put("caowner", caowner.get("firstname").substring(0, 1) + ". " + caowner.get("lastname") + " (" + ca.get("caowner") + ")");
-
                     task.putAll(ca);
                 } else {
                     if (task.get("assigner_type") != null && task.get("assigner_name") != null && task.get("assigner_type").equals("Person") && task.get("assigner_name").equals(username)) {
