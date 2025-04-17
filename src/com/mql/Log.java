@@ -84,4 +84,23 @@ public class Log {
         responseBuilder.header("Content-Type", "text/html");
         return responseBuilder.build();
     }
+
+    public static Response eWithText(Exception exception) {
+        try {
+            errors.add(currentTime() + " E: " + exception.getClass().getName() + "\n" + exception
+                    .getMessage() + "\n" + (
+                    (exception.getCause() != null) ? (exception.getCause().getMessage() + "\n") : "") +
+                    ExceptionUtils.getStackTrace(exception));
+            while (errors.size() > 100)
+                errors.removeFirst();
+        } catch (Exception e) {
+            errors = new LinkedList<>();
+        }
+        exception.printStackTrace();
+
+        Response.ResponseBuilder responseBuilder = Response.ok(exception.getMessage());
+        responseBuilder.status(Response.Status.INTERNAL_SERVER_ERROR);
+        responseBuilder.header("Content-Type", "text/html");
+        return responseBuilder.build();
+    }
 }
