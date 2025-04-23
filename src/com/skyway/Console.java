@@ -31,7 +31,7 @@ import static org.apache.poi.ss.usermodel.CellStyle.*;
 /**
  * Бекэнд виджета SWT Console
  * */
-//@Path("")
+
 public class Console extends SpecUtils {
 
     public Context authenticate(HttpServletRequest request) throws IOException {
@@ -370,8 +370,7 @@ public class Console extends SpecUtils {
 
         Context context = authenticate(request);
         Map resp = new HashMap();
-        // Context context = authWithSession("https://3dspace-m001.sw-tech.by:444/internal/", request.getCookies()[0].getValue(), "m.kim", "ctx::VPLMCreator.SkyWay.Common Space");
-        //String[] args = new String [] { "36284.36534.21241.63054"};
+
         StringList currentSelects = new StringList() {{ add("id"); }};
         MapList mapList =  DomainObject.findObjects(context,
                 "VPMReference",   //type
@@ -737,7 +736,7 @@ public class Console extends SpecUtils {
                                   @QueryParam("name") String name) {
         try {
             Context ctx = authenticate(request);
-           // Context ctx = authWithSession("https://3dspace-m001.sw-tech.by:444/3dspace/", request.getCookies()[0].getValue(), "m.kim", "ctx::VPLMCreator.SkyWay.Common Space");
+
             StringList currentSelects = new StringList() {{
                 add("physicalid");
                 add(SELECT_TYPE);

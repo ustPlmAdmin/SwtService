@@ -1,17 +1,32 @@
 package com.skyway;
 
-import com.matrixone.apps.domain.util.FrameworkException;
-import matrix.db.Context;
 
+import com.dassault_systemes.enovia.changeaction.impl.ProposedActivity;
+import com.matrixone.apps.domain.DomainObject;
+import com.matrixone.apps.domain.util.ContextUtil;
+import com.matrixone.apps.domain.util.FrameworkException;
+import com.matrixone.apps.domain.util.MapList;
+import com.matrixone.apps.framework.ui.UIUtil;
+import com.mql.MqlService;
+import matrix.db.Context;
+import matrix.db.MQLCommand;
+import matrix.util.MatrixException;
+import matrix.util.StringList;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.*;
+
+import static com.matrixone.apps.domain.DomainConstants.*;
+
 /**
  * Бекэнд виджета SWT ApproverCat
  * */
+
 public class ApproverCat extends SkyService {
 
     void filterRoutesWithUserTasks(Context ctx, String username, List<Map<String, String>> routes) throws FrameworkException {
@@ -103,6 +118,79 @@ public class ApproverCat extends SkyService {
                 route.put("ca_name", "");
                 route.put("ca_owner", findScalar(ctx, "*", route.get("route_name"), "owner"));
             }
+        }
+    }
+
+
+    @GET
+    @Path("/approve_cat_find")
+    public Response approve_cat_find(@javax.ws.rs.core.Context HttpServletRequest request,
+                                 @QueryParam("name") String name) {
+        try {
+            Context ctx = authenticate(request);
+            StringList currentSelects = new StringList() {{
+                add("id");
+                add("physicalid");
+                add(SELECT_TYPE);
+                add(SELECT_NAME);
+                add(SELECT_REVISION);
+                add("current");
+                add("attribute[IGAPartEngineering.IGASpecChapter]");
+                add("attribute[PLMEntity.V_usage]");
+                add("attribute[PLMEntity.V_Name]");
+                add("attribute[Change Id]");
+            }};
+
+            MapList mapList =  DomainObject.findObjects(ctx,
+                    null,   //type
+                    name,        // name
+                    null,        // revision
+                    QUERY_WILDCARD,  // owner
+                    QUERY_WILDCARD,  // vault
+                    null,
+                    null,        // query name
+                    false,       // expand type
+                    currentSelects,     // selects
+                    (short) 0       // object limit
+            );
+
+            for( Object item : mapList){
+
+                HashMap<String,String> map = (HashMap<String,String>)item;
+                map.put("physicalId", map.remove("physicalid"));
+                map.put("changeId", map.remove("attribute[Change Id]"));
+                map.put("vName", map.remove("attribute[PLMEntity.V_Name]"));
+                map.put("vUsage", map.remove("attribute[PLMEntity.V_usage]"));
+                map.put("igaSpecChapter", map.remove("attribute[IGAPartEngineering.IGASpecChapter]"));
+
+            }
+            return response(mapList);
+        } catch (Exception e) {
+            return errorWithText(e);
+        } finally {
+            finish(request);
+        }
+    }
+
+    @GET
+    @Path("/approve_cat_clear_interface")
+    public Response clear_interface(@javax.ws.rs.core.Context HttpServletRequest request,
+                              @QueryParam("id") String id) throws  MatrixException {
+        Context ctx = internalAuth(request);
+        try {
+
+            DomainObject domainObject = new DomainObject(id);
+
+            ContextUtil.startTransaction(ctx, true);
+            domainObject.setAttributeValue(ctx,"Change Id","");
+            ContextUtil.commitTransaction(ctx);
+
+            return response("Object deleted ");
+        } catch (Exception e) {
+            ContextUtil.abortTransaction(ctx);
+            return errorWithText(e);
+        } finally {
+            finish(request);
         }
     }
 

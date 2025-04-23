@@ -37,6 +37,10 @@ public class SkyService extends MqlService {
         return Log.e(e);
     }
 
+    public Response errorWithText(Exception e) {
+        return Log.eWithText(e);
+    }
+
     public Response ok() {
         return Response.ok().build();
     }
