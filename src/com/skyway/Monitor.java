@@ -30,7 +30,7 @@ public class Monitor extends SkyService {
             } else {
                 type = "Inbox Task";
             }
-            result = deti(ctx, type, taskId, erpName);
+            result = getChildren(ctx, type, taskId, erpName);
 
         } catch (IOException | FrameworkException e) {
             e.printStackTrace();
@@ -39,47 +39,48 @@ public class Monitor extends SkyService {
         return response(result);
     }
 
-    private Map<String, Object> deti(Context ctx, String type, String id, String name) throws FrameworkException {
+    private Map<String, Object> getChildren(Context ctx, String type, String id, String name) throws FrameworkException {
         List<Map<String, Object>> children = new LinkedList<>();
-        Map<String, Object> realChildren = new LinkedHashMap<>();
+        Map<String, Object> childNames = new LinkedHashMap<>();
         Map<String, Object> child = new LinkedHashMap<>();
         child.put("name", name);
         child.put("title", findScalar(ctx, type, name, "attribute[Title]"));
         child.put("status", findScalar(ctx, type, name, "current"));
+        child.put("id", id);
         String conn = "";
         switch (type) {
             case "Task":
                 conn = "from[Object Route].to";
-                realChildren = tree(ctx, id, conn);
+                childNames = tree(ctx, id, conn);
                 type = "Route";
                 break;
             case "Route":
                 conn = "to[Route Task].from";
-                realChildren = tree(ctx, id, conn);
+                childNames = tree(ctx, id, conn);
                 type = "Inbox Task";
                 break;
             case "Inbox Task":
                 conn = "from[Task Sub Route].to";
-                realChildren = tree(ctx, id, conn);
+                childNames = tree(ctx, id, conn);
                 type = "Route";
                 break;
         }
-        for (Object c : realChildren.values()) {
+        for (Object c : childNames.values()) {
             ArrayList<String> list = new ArrayList<>();
             if (c.getClass().getName().equals("java.lang.String")) {
                 if (isValid(String.valueOf(c), type)) {
-                    Map<String, Object> deti = deti(ctx, type, findScalar(ctx, type, String.valueOf(c), "id"), String.valueOf(c));
-                    if (!deti.isEmpty()) {
-                        child.put("children", deti);
+                    children.add(getChildren(ctx, type, findScalar(ctx, type, String.valueOf(c), "id"), String.valueOf(c)));
+                    if (!children.isEmpty()) {
+                        child.put("children", children);
                     } else {
-                        child.put("children", realChildren.get(conn));
+                        child.put("children", childNames.get(conn));
                     }
                 }
             } else {
                 list = (ArrayList<String>) c;
                 for (String str : list) {
                     if (isValid(str, type)) {
-                        children.add(deti(ctx, type, findScalar(ctx, type, str, "id"), str));
+                        children.add(getChildren(ctx, type, findScalar(ctx, type, str, "id"), str));
                     }
                 }
                 child.put("children", children);
@@ -89,7 +90,7 @@ public class Monitor extends SkyService {
         return child;
     }
 
-    boolean isValid (String name, String type) {
+    boolean isValid(String name, String type) {
         if (type.equals("Task") && name.startsWith("ERP")) {
             return true;
         } else if (type.equals("Route") && name.startsWith("R-")) {
