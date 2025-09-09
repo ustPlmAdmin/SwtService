@@ -37,7 +37,7 @@ public class Console extends SpecUtils {
     public Context authenticate(HttpServletRequest request) throws IOException {
         Context context = super.authenticate(request);
         String username = context.getSession().getUserName();
-        if (username.equals("m.kim") || username.equals("s.beresnev") || username.equals("a.pagoda") || username.equals("a.pavlovich")  || username.equals("admin_platform"))
+        if (username.equals("m.kim") || username.equals("t.baranova") || username.equals("a.pagoda") || username.equals("a.pavlovich")  || username.equals("admin_platform"))
             return context;
         throw new AuthenticationException();
     }
@@ -145,12 +145,13 @@ public class Console extends SpecUtils {
     public Response ca_delete_rels(@javax.ws.rs.core.Context HttpServletRequest request,
                                    @QueryParam("name") String ca_name) {
         try {
-            Context ctx = authenticate(request);
+            Context ctx = internalAuth(request);
             String id = findScalar(ctx, "Change Action", ca_name, "id");
             int deleted = 0;
             Map<String, String> map = expand(ctx, id);
             for (String tnr : map.keySet()) {
-                List<String> rels = list(ctx, map.get(tnr), "paths.path.element[0].physicalid");
+                List<String> relsList = list(ctx, map.get(tnr), "paths.path.element[0].physicalid");
+                Set<String> rels = new HashSet<>(relsList);
                 for (String physicalId : rels) {
                     try {
                         scalar(ctx, physicalId, "owner");
