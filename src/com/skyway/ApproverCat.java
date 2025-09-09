@@ -1,15 +1,10 @@
 package com.skyway;
 
-
-import com.dassault_systemes.enovia.changeaction.impl.ProposedActivity;
 import com.matrixone.apps.domain.DomainObject;
 import com.matrixone.apps.domain.util.ContextUtil;
 import com.matrixone.apps.domain.util.FrameworkException;
 import com.matrixone.apps.domain.util.MapList;
-import com.matrixone.apps.framework.ui.UIUtil;
-import com.mql.MqlService;
 import matrix.db.Context;
-import matrix.db.MQLCommand;
 import matrix.util.MatrixException;
 import matrix.util.StringList;
 import javax.servlet.http.HttpServletRequest;
@@ -71,7 +66,6 @@ public class ApproverCat extends SkyService {
             for (Map<String, String> task : findRows(ctx, "*", route.get("task_name"),
                     "current:task_current",
                     "originated:task_originated",
-//                    "from[Route Task].to.attribute[Route Status]:status",
                     "attribute[Title]:task_comment",
                     "attribute[Scheduled Completion Date]:task_finish",
                     "from[Project Task].to:assigner_id",
@@ -186,6 +180,28 @@ public class ApproverCat extends SkyService {
             ContextUtil.commitTransaction(ctx);
 
             return response("Object deleted ");
+        } catch (Exception e) {
+            ContextUtil.abortTransaction(ctx);
+            return errorWithText(e);
+        } finally {
+            finish(request);
+        }
+    }
+
+    @GET
+    @Path("/approve_cat_move_to_release")
+    public Response move_to_release(@javax.ws.rs.core.Context HttpServletRequest request,
+                                    @QueryParam("id") String id) throws MatrixException, IOException {
+        Context ctx = internalAuth(request);
+        try {
+
+            DomainObject domainObject = new DomainObject(id);
+
+            ContextUtil.startTransaction(ctx, true);
+            domainObject.current(ctx, "RELEASED");
+            ContextUtil.commitTransaction(ctx);
+
+            return response("Object moved to release ");
         } catch (Exception e) {
             ContextUtil.abortTransaction(ctx);
             return errorWithText(e);
