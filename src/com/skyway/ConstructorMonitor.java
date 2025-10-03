@@ -186,11 +186,12 @@ public class ConstructorMonitor extends SkyService {
         List<Map<String, String>> standardRoutes = new ArrayList<>();
         if (routes.size() > 0) {
             for (Map<String, String> route : routes) {
-                List<Map<String, String>> route_attrs = findRows(ctx, "Route", route.get("route_name"), "attribute[Route Status]:route_state", "description", "owner");
+                List<Map<String, String>> route_attrs = findRows(ctx, "Route", route.get("route_name"), "attribute[Route Status]:route_state", "from[Initiating Route Template].to:template", "owner");
                 if (route_attrs.size() > 0) {
-                    if (route_attrs.get(0).get("description").toLowerCase(Locale.ROOT).contains("стандартн") ||
-                            route_attrs.get(0).get("description").toLowerCase(Locale.ROOT).contains("материал") ||
-                            route_attrs.get(0).get("description").toLowerCase(Locale.ROOT).contains("покупн")) {
+                    if (route_attrs.get(0).get("template") != null && route_attrs.get(0).get("template").length() > 1 &&
+                            (route_attrs.get(0).get("template").toLowerCase(Locale.ROOT).contains("стандартн") ||
+                            route_attrs.get(0).get("template").toLowerCase(Locale.ROOT).contains("материал") ||
+                            route_attrs.get(0).get("template").toLowerCase(Locale.ROOT).contains("покупн"))) {
                         List<Map<String, String>> tasks = findRows(ctx, "Route", route.get("route_name"),
                                 "to[Route Task].from.name:task_name",
                                 "to[Route Task].from.current:task_state",
@@ -200,27 +201,34 @@ public class ConstructorMonitor extends SkyService {
                                 "to[Route Task].from.from[Project Task].to:assigner_id",
                                 "to[Route Task].from.from[Project Task].to.attribute[First Name]:assigner_first_name",
                                 "to[Route Task].from.from[Project Task].to.attribute[Last Name]:assigner_last_name");
+                        Map<String, String> temp = new LinkedHashMap<>();
+                        temp.put("route_name", route.get("route_name"));
+                        temp.put("route_owner", route_attrs.get(0).get("owner"));
+                        temp.put("id", route.get("id"));
+                        Map<String, String> active_task = new LinkedHashMap<>();
                         if (tasks.size() > 0) {
                             for (Map<String, String> task : tasks) {
                                 if (!task.get("task_state").equals("Complete")) {
-                                    Map<String, String> temp = new LinkedHashMap<>();
-                                    temp.put("route_name", route.get("route_name"));
-                                    temp.put("route_owner", route_attrs.get(0).get("owner"));
-                                    temp.put("id", route.get("id"));
-                                    temp.put("task_name", task.get("task_name"));
-                                    temp.put("task_originated", printDateFormat.format(dateFormat.parse(task.get("task_originated"))));
+                                    active_task.clear();
+                                    active_task.put("task_name", task.get("task_name"));
+                                    active_task.put("task_originated", printDateFormat.format(dateFormat.parse(task.get("task_originated"))));
                                     if (task.get("task_finish") != null && !task.get("task_finish").isEmpty()) {
                                         Calendar finish = Calendar.getInstance();
                                         finish.setTime(dateFormat.parse(task.get("task_finish")));
-                                        temp.put("task_finish", printDateFormat.format(finish.getTime()));
+                                        active_task.put("task_finish", printDateFormat.format(finish.getTime()));
                                     }
-                                    temp.put("task_assigner", (task.getOrDefault("assigner_first_name", "") + " "
+                                    active_task.put("task_assigner", (task.getOrDefault("assigner_first_name", "") + " "
                                             + task.getOrDefault("assigner_last_name", "") + " "
                                             + task.get("assigner_id")).trim());
-                                    temp.put("task_comment", task.get("task_comment"));
+                                    active_task.put("task_comment", task.get("task_comment"));
+                                    temp.putAll(active_task);
                                     standardRoutes.add(temp);
                                 }
                             }
+                        }
+                        if (active_task.size() < 1) {
+                            standardRoutes.add(temp);
+
                         }
                     }
                 }
@@ -286,9 +294,9 @@ public class ConstructorMonitor extends SkyService {
                     "id"
             };
 
-            if (username.equals("a.pagoda")) {
-                username = "a.lutsko";
-            }
+//            if (username.equals("a.pagoda")) {
+//                username = "a.lutsko";
+//            }
             List<Map<String, String>> myTasks = findObjectsWhere(ctx, "Inbox Task", "*",
                     "current == \"Assigned\"" +
                             " && from[Route Task].to.current == \"In Process\"" +

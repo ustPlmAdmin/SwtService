@@ -22,7 +22,8 @@ public class ConsoleBeta extends SkyService {
             Context ctx = authenticate(request);
             List<Map<String, String>> res = new LinkedList<>();
 
-            List<Map<String, String>> find_name = findRows(ctx, "*", name, "current", "revision", "id", "physicalid", "name", "type");
+            List<Map<String, String>> find_name = findObjects(ctx, "*", name, "current", "revision", "id", "physicalid", "name", "type");
+
             try {
                 List<Map<String, String>> find_id = select(ctx, name, "current", "revision", "id", "physicalid", "name", "type");
                 if (find_id != null && find_id.size() > 0) {
